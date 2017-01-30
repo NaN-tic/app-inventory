@@ -1,0 +1,54 @@
+<!--
+  Generated template for the LocationInventory page.
+
+  See http://ionicframework.com/docs/v2/components/#navigation for more info on
+  Ionic pages and navigation.
+-->
+
+
+<ion-header>
+  <ion-navbar>
+    <ion-title> Location</ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content padding>
+    <ion-list>  
+      
+      <ion-item>
+        <ion-label color="primary"> Ubicacción </ion-label>
+        <ion-input [(ngModel)]="itemInput" (ngModelChange)="inputChange($event)"></ion-input>
+        <br>
+        <br>
+      </ion-item>
+     	<button ion-item *ngFor="let i of list_items" (click)="itemSelected($event, i)">
+      	{{i.name}}
+        <div item-content>
+        {{i.code}}
+        </div>
+     	</button>
+   	</ion-list>
+
+   	<ion-infinite-scroll (ionInfinite)="doInfinite($event)">
+     	<ion-infinite-scroll-content></ion-infinite-scroll-content>
+   	</ion-infinite-scroll>
+
+</ion-content>
+
+<ion-footer>
+  	<ion-toolbar color="primary">
+	  	<ion-buttons left>
+		  <ion-icon name="ion-ios-arrow-back"></ion-icon>
+	  	</ion-buttons>
+	  	<ion-buttons right>
+  		  <button [disabled]="!elementInput" ion-button icon-right (click)="goForward()">
+  		    Done
+  		  </button>
+  		  <ion-icon name="ion-ios-arrow-forward"></ion-icon>
+	  	</ion-buttons>
+	</ion-toolbar>
+</ion-footer>
+
+
+
+

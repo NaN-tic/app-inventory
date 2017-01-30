@@ -1,0 +1,56 @@
+<ion-header>
+  <ion-navbar>
+    <ion-title> Inventory </ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content padding>
+    <H2 class="title">{{ location.name }}</H2>
+
+    <div class="input_field">
+      <ion-list>
+        <ion-item>
+          <ion-label color="primary"> Producto: </ion-label>
+          <ion-input clearOnEdit clearInput [(ngModel)]="itemInput" (ngModelChange)="inputChange($event)">
+          </ion-input>        
+          <br>
+        </ion-item>
+      </ion-list>
+    </div>
+
+    <ion-grid>
+      <ion-row class="item-divider">
+         <ion-col width-75>
+            <strong class="table_labels">Product</strong>
+          </ion-col>
+          <ion-col width-25>
+            <strong>Quantity</strong>
+          </ion-col>
+        </ion-row>
+      <ion-row class="success" *ngFor="let i of item_array">
+          <ion-col width-75>{{i.product.name}} {{i.product.code}}</ion-col>
+          <ion-col width-25>
+            <ion-input class="quantity" [(ngModel)]="i.quantity">
+            </ion-input>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    
+
+</ion-content>
+
+<ion-footer>
+  	<ion-toolbar color="primary">
+	  	<ion-buttons left>
+		  <ion-icon name="ion-ios-arrow-back"></ion-icon>
+	  	</ion-buttons>
+	  	<ion-buttons right>
+  		  <button [disabled]="elementInput" ion-button icon-right (click)="save()">
+  		    Save
+  		  </button>
+  		  <ion-icon name="ion-ios-arrow-forward"></ion-icon>
+	  	</ion-buttons>
+	</ion-toolbar>
+</ion-footer>
+
+
