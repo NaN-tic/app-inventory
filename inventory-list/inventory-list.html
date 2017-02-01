@@ -1,6 +1,6 @@
 <ion-header>
   <ion-navbar>
-    <ion-title> Inventory </ion-title>
+    <ion-title> {{'Inventory' | translate}} </ion-title>
   </ion-navbar>
 </ion-header>
 
@@ -10,9 +10,9 @@
     <div class="input_field">
       <ion-list>
         <ion-item>
-          <ion-label color="primary"> Producto: </ion-label>
+          <ion-label color="primary"> {{'Product' | translate}}  : </ion-label>
           <ion-input clearOnEdit clearInput [(ngModel)]="itemInput" (ngModelChange)="inputChange($event)">
-          </ion-input>        
+          </ion-input>
           <br>
         </ion-item>
       </ion-list>
@@ -21,10 +21,10 @@
     <ion-grid>
       <ion-row class="item-divider">
          <ion-col width-75>
-            <strong class="table_labels">Product</strong>
+            <strong class="table_labels">{{'Product' | translate}}</strong>
           </ion-col>
           <ion-col width-25>
-            <strong>Quantity</strong>
+            <strong>{{'Quantity' | translate}}</strong>
           </ion-col>
         </ion-row>
       <ion-row class="success" *ngFor="let i of item_array">
@@ -35,7 +35,7 @@
           </ion-col>
         </ion-row>
       </ion-grid>
-    
+
 
 </ion-content>
 
@@ -46,11 +46,9 @@
 	  	</ion-buttons>
 	  	<ion-buttons right>
   		  <button [disabled]="elementInput" ion-button icon-right (click)="save()">
-  		    Save
+  		    {{'Save' | translate}}
   		  </button>
   		  <ion-icon name="ion-ios-arrow-forward"></ion-icon>
 	  	</ion-buttons>
 	</ion-toolbar>
 </ion-footer>
-
-
