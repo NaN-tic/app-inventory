@@ -5,8 +5,8 @@ import { EncodeJSONRead } from '../../json/encode-json-read'
 import { EncodeJSONWrite } from '../../json/encode-json-write'
 import { TrytonProvider } from '../../providers/tryton-provider'
 
-import { Products } from '../../../models/products'
-import { Inventory, InventoryLines } from '../../../models/inventory'
+import { Products } from '../../../models/interfaces/products'
+import { Inventory, InventoryLines } from '../../../models/interfaces/inventory'
 
 /*
   Generated class for the InventoryList page.
