@@ -3,7 +3,7 @@ import { NavController, NavParams } from 'ionic-angular';
 import { Locker } from 'angular-safeguard';
 
 import { InfiniteList } from '../../infinite-list/infinite-list'
-import { EncodeJSONRead } from '../../models/json/encode-json-read'
+import { EncodeJSONRead } from '../../json/encode-json-read'
 import { TrytonProvider } from '../../providers/tryton-provider'
 import { Inventory } from '../../../models/interfaces/inventory'
 import { Location } from '../../../models/interfaces/location'
@@ -50,7 +50,7 @@ export class InventoriesPage extends InfiniteList{
 
   	/**
  	 * Gets called when a location from the list is selected
-  	 * @param {Object} event   Event description
+   * @param {Object} event   Event description
  	 * @param {Location} item  Location selected
  	 * @returns                Go to the next page
  	 */

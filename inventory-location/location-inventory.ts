@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, ViewChild, Input, AfterViewInit } from '@angular/core';
 import { NavController, NavParams } from 'ionic-angular';
 import { InfiniteList } from '../../infinite-list/infinite-list'
 import { EncodeJSONRead } from '../../json/encode-json-read'
@@ -19,15 +19,18 @@ import { Location } from '../../../models/location'
  * write or scan a location and the system will check if the location is
  * valid or it is not
  */
-export class LocationInventoryPage extends InfiniteList {
+export class LocationInventoryPage extends InfiniteList implements AfterViewInit{
 
   @Input()
   itemInput: string;
+  @ViewChild('focusInput') myInput;
   item: string
 
   elementInput: boolean = false;
 
   location: Location;
+
+  blur_element: boolean;
 
   constructor(public navCtrl: NavController, public trytond_provider: TrytonProvider,
   		private navParams: NavParams) {
@@ -39,11 +42,29 @@ export class LocationInventoryPage extends InfiniteList {
     this.domain = "[" + new EncodeJSONRead().createDomain("type",
       "=", "storage") + "]";
     this.fields = ["name", "code", "parent.name"]
-    this.loadData()
-
+    this.loadData();
+    this.blur_element = true;
     this.elementInput = false;
-
   }
+
+  ngAfterViewInit() {
+    console.log("set input")
+    this.myInput.setFocus()
+  }
+   blurInput(event){
+     console.log("Blured", event)
+     if (this.blur_element)
+        this.myInput.setFocus();
+      this.blur_element = false;
+   }
+   ionViewDidEnter() {
+     console.log("Inside view");
+     this.blur_element = true;
+     this.myInput.setFocus();
+   }
+   setFocus(event) {
+     console.log("Focus set")
+   }
   /**
    * Gets called when a location from the list is selected
    * @param {Object} event   Event description
@@ -62,7 +83,7 @@ export class LocationInventoryPage extends InfiniteList {
     console.log("Searching for code", this.itemInput);
     let json_constructor = new EncodeJSONRead();
     let search_domain = "[" + json_constructor.createDomain(
-      "code", "=", this.itemInput) + "]"
+      "code", "=", this.itemInput.toUpperCase()) + "]"
     let fields = ['name', 'code', 'parent.name']
     let method = "stock.location"
     json_constructor.addNode(method, search_domain, fields)
@@ -86,8 +107,11 @@ export class LocationInventoryPage extends InfiniteList {
    * @param {Object} event Event description
    */
   inputChange(event) {
-    if (this.itemInput)
+    console.log("INput changed")
+    if (this.itemInput){
       this.elementInput = true;
+      this.goForward();
+    }
     else
       this.elementInput = false;
   }

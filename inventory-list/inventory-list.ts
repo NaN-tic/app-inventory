@@ -1,6 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChild, AfterViewInit } from '@angular/core';
 import { Locker } from 'angular-safeguard';
-import { NavController, NavParams } from 'ionic-angular';
+import { NavController, NavParams, AlertController, Platform } from 'ionic-angular';
 import { EncodeJSONRead } from '../../json/encode-json-read'
 import { EncodeJSONWrite } from '../../json/encode-json-write'
 import { TrytonProvider } from '../../providers/tryton-provider'
@@ -18,10 +18,12 @@ import { Inventory, InventoryLines } from '../../../models/interfaces/inventory'
   selector: 'page-inventory-list',
   templateUrl: 'inventory-list.html'
 })
-export class InventoryListPage {
+export class InventoryListPage implements AfterViewInit {
 
   @Input()
   itemInput: string;
+  @ViewChild('focusInput2') myInput2;
+  lastItem: string;
   /**
    * Items to display
    * @type {InventoryLines[]}
@@ -37,14 +39,18 @@ export class InventoryListPage {
 
   elementInput: boolean = false;
   new_inventory: boolean = true;
+  blur_element: boolean;
 
   constructor(public navCtrl: NavController, public navParams: NavParams,
-    public trytonProvider: TrytonProvider, public locker: Locker) {
+    public trytonProvider: TrytonProvider, public locker: Locker,
+    public alertCtrl: AlertController, public platform: Platform) {
 
     // Get location
     this.location = navParams.get('location');
     this.new_inventory = navParams.get('params')
     console.log("Location", this.location, " New", this.new_inventory)
+
+    this.blur_element = true;
 
     if (!this.new_inventory) {
       this.inventory = navParams.get('inventory')
@@ -63,7 +69,45 @@ export class InventoryListPage {
       }
       console.log("Creating new inventory", this.inventory)
     }
+}
+  /**
+   * Asks the suer if he/she wants to leave the view
+   * @return {Promise<any>} True or false
+   */
+  ionViewCanLeave(): Promise<any> {
+    return new Promise((resolve, reject) => {
+      let confirm = this.alertCtrl.create({
+        title: 'Are you sure you want to leave?',
+        message: 'All progress will be lost if you do not save?',
+        enableBackdropDismiss: false,
+        buttons: [{
+          text: 'OK',
+          handler: () => {
+            resolve();
+          },
+        }, {
+          text: 'Cancel',
+          handler: () => {
+            reject();
+          }
+        }],
+      });
+      confirm.present();
+    })
   }
+  ngAfterViewInit() {
+    console.log("Ion init")
+    this.myInput2.setFocus()
+  }
+
+  /**
+   * Fallback if the input loses focus
+   */
+  blurInputs(event){
+    if (this.blur_element)
+      this.myInput2.setFocus();
+    this.blur_element = false;
+   }
 
   /**
    * Fetchs the data from the selected inventory
@@ -109,23 +153,45 @@ export class InventoryListPage {
   }
 
 	/**
-     * Listener for an input event. Sets the done button enabled or disabled
-     * @param {Object} event Event description
-     */
+   * Listener for an input event. Sets the done button enabled or disabled
+   * @param {Object} event Event description
+   */
   inputChange(event) {
-    console.log("Dected a change on the input", this.itemInput);
-    if (this.itemInput) {
-      for (let line of this.item_array) {
-        if (line.product.codes_number == this.itemInput) {
-          line.quantity += 1;
-          this.itemInput = '';
-          return;
-        }
-      }
-      this.getProduct(this.itemInput)
+    console.log("Dected a change on the input", this.itemInput, Number(this.itemInput));
+    if (this.itemInput && Number(this.itemInput) > 100000) {
+      console.log("Setting product quantity")
+      if (!this.setProductQuantity(this.itemInput, 1))
+        this.getProduct(this.itemInput)
     }
+    else if (this.itemInput && Number(this.itemInput) < 100000) {
+      // Should never show the alert
+      if (!this.setProductQuantity(this.lastItem, Number(this.itemInput)))
+        alert('No se ha podido encontrar el producto')
+    }
+    this.myInput2.setFocus()
   }
-
+  /**
+   * Sets the quantity for a given code
+   * @param  {string} item_code    Code of the item to look for
+   * @param  {number} set_quantity Quantity to add or to set
+   * @return {boolean}             True if an item was found
+   */
+  setProductQuantity(item_code: string, set_quantity: number){
+    for (let line of this.item_array) {
+      console.log("COdes", line.product.codes_number, item_code)
+      if (line.product.codes_number == item_code) {
+        if (Number(this.itemInput) > 100000){
+          line.quantity += set_quantity;
+          this.lastItem = this.itemInput;
+        }
+        else
+          line.quantity = set_quantity
+        this.itemInput = '';
+        return true;
+      }
+    }
+    return false;
+  }
   /**
    * Gets the data from the given product barcode
    * @param {string} barcode Bar code number of a product
@@ -156,6 +222,7 @@ export class InventoryListPage {
         this.item_array.push(this.inventory_line);
         this.inventory.lines.push(this.inventory_line);
         console.log("Updated inventory lines", this.inventory.lines)
+        this.lastItem = this.itemInput;
         this.itemInput = "";
       },
       error => {
@@ -195,17 +262,23 @@ export class InventoryListPage {
   }
 
   /**
-   * Saves the current inventory into tryton
+   * Saves the current inventory into tryton.
+   * Inventories with no products are not saved
    */
   save() {
     if (this.new_inventory == false) {
       this.update()
       return;
     }
-    console.log("Sving");
+    if (this.inventory.lines.length == 0){
+      alert('The inventory has no products');
+      return;
+    }
+    console.log("Saving");
     let json_constructor = new EncodeJSONWrite;
     let method = "stock.inventory";
     let id = this.inventory.id;
+    console.log("Location", this.inventory)
     let values = {
       company: this.inventory.company_id,
       location: this.inventory.location.id,
@@ -218,7 +291,7 @@ export class InventoryListPage {
       data => {
         let json_lines = new EncodeJSONWrite;
         let inventory_line = "stock.inventory.line"
-
+        console.log("data", data)
         for (let line of this.inventory.lines) {
           id = line.id;
           let values = {

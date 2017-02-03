@@ -4,14 +4,18 @@
   </ion-navbar>
 </ion-header>
 
-<ion-content padding>
+<ion-content padding overflow-scroll="true">
     <H2 class="title">{{ location.name }}</H2>
 
     <div class="input_field">
       <ion-list>
         <ion-item>
           <ion-label color="primary"> {{'Product' | translate}}  : </ion-label>
-          <ion-input clearOnEdit clearInput [(ngModel)]="itemInput" (ngModelChange)="inputChange($event)">
+          <ion-input #focusInput2
+          [(ngModel)]="itemInput"
+          (blur)="blurInputs($event)"
+          (keyup.enter)="inputChange($event)"
+          autofocus>
           </ion-input>
           <br>
         </ion-item>

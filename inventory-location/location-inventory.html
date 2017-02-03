@@ -5,19 +5,24 @@
   </ion-navbar>
 </ion-header>
 
-<ion-content padding>
+<ion-content padding overflow-scroll="true">
     <ion-list>
 
       <ion-item>
         <ion-label color="primary"> {{'Location' | translate}} :</ion-label>
-        <ion-input [(ngModel)]="itemInput" (ngModelChange)="inputChange($event)"></ion-input>
+        <ion-input #focusInput
+        (focus)="setFocus($event)"
+        [(ngModel)]="itemInput"
+        (blur)="blurInput($event)"
+        (keyup.enter)="inputChange($event)"
+        autofocus></ion-input>
       </ion-item>
      	<button ion-item *ngFor="let i of list_items" (click)="itemSelected($event, i)">
       	{{i.name}}
         <div item-content>
         {{i.code}}
         </div>
-     	</button>
+     	</button>-
    	</ion-list>
 
    	<ion-infinite-scroll (ionInfinite)="doInfinite($event)">
