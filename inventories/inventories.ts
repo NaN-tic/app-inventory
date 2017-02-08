@@ -44,7 +44,7 @@ export class InventoriesPage extends InfiniteList{
         this.domain = "[" + new EncodeJSONRead().createDomain("state",
             "=", "draft") + "]";
         this.fields = ["date", "company.id", "location.name", "location.code",
-        "location.parent.name", "location.id"];
+        "location.parent.name", "location.id", "state"];
         this.loadData()
   	}
 
@@ -66,6 +66,7 @@ export class InventoriesPage extends InfiniteList{
     	this.inventory = {
     		company_id: item.company_id,
     		date: item.date,
+        state: item.state,
     		location: this.location,
     		id: item.id
     	}

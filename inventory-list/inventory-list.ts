@@ -40,6 +40,8 @@ export class InventoryListPage implements AfterViewInit {
   elementInput: boolean = false;
   new_inventory: boolean = true;
   blur_element: boolean;
+  saved: boolean = false;
+  not_checking: boolean = true;
 
   constructor(public navCtrl: NavController, public navParams: NavParams,
     public trytonProvider: TrytonProvider, public locker: Locker,
@@ -53,6 +55,7 @@ export class InventoryListPage implements AfterViewInit {
     this.blur_element = true;
 
     if (!this.new_inventory) {
+      this.not_checking = false;
       this.inventory = navParams.get('inventory')
       this.fetchInventoryData(this.location, this.inventory)
     }
@@ -64,6 +67,7 @@ export class InventoryListPage implements AfterViewInit {
         company_id: this.local_storage.get('UserData')[0].company_id,
         date: this.format_date(current_date),
         location: navParams.get('location'),
+        state: "draft",
         id: -1,
         lines: []
       }
@@ -75,25 +79,27 @@ export class InventoryListPage implements AfterViewInit {
    * @return {Promise<any>} True or false
    */
   ionViewCanLeave(): Promise<any> {
-    return new Promise((resolve, reject) => {
-      let confirm = this.alertCtrl.create({
-        title: 'Are you sure you want to leave?',
-        message: 'All progress will be lost if you do not save?',
-        enableBackdropDismiss: false,
-        buttons: [{
-          text: 'OK',
-          handler: () => {
-            resolve();
-          },
-        }, {
-          text: 'Cancel',
-          handler: () => {
-            reject();
-          }
-        }],
-      });
-      confirm.present();
-    })
+    if (!this.saved) {
+      return new Promise((resolve, reject) => {
+        let confirm = this.alertCtrl.create({
+          title: 'Are you sure you want to leave?',
+          message: 'All progress will be lost if you do not save?',
+          enableBackdropDismiss: false,
+          buttons: [{
+            text: 'OK',
+            handler: () => {
+              resolve();
+            },
+          }, {
+            text: 'Cancel',
+            handler: () => {
+              reject();
+            }
+          }],
+        });
+        confirm.present();
+      })
+    }
   }
   ngAfterViewInit() {
     console.log("Ion init")
@@ -118,7 +124,7 @@ export class InventoryListPage implements AfterViewInit {
     let json_constructor = new EncodeJSONRead;
     let method = "stock.inventory.line";
     let fields = ["product.name", "product.rec_name", "product.codes.number",
-      "product.id", "quantity", "expected_quantity"];
+      "product.id", "quantity", "expected_quantity", "state"];
     let domain = "[" + json_constructor.createDomain(
       "inventory", "=", inventory.id) + "]";
 
@@ -145,6 +151,7 @@ export class InventoryListPage implements AfterViewInit {
           this.item_array.push(this.inventory_line)
           this.inventory.lines = this.item_array;
         }
+        this.saved = true;
         console.log("Fetched data", this.inventory);
       },
       error => {
@@ -289,6 +296,7 @@ export class InventoryListPage implements AfterViewInit {
 
     this.trytonProvider.write(json).subscribe(
       data => {
+        this.inventory.id = data[method][0];
         let json_lines = new EncodeJSONWrite;
         let inventory_line = "stock.inventory.line"
         console.log("data", data)
@@ -305,7 +313,8 @@ export class InventoryListPage implements AfterViewInit {
         this.trytonProvider.write(lines).subscribe(
           data => {
             console.log("Created succesfuly", data)
-            this.navCtrl.pop();
+            this.saved = true;
+            this.new_inventory = false;
           })
       })
 
@@ -331,7 +340,27 @@ export class InventoryListPage implements AfterViewInit {
     this.trytonProvider.write(lines).subscribe(
       data => {
         console.log("Update successful", data)
-        this.navCtrl.pop();
+        alert('Inventario actualizado')
+      })
+  }
+
+  confirm() {
+    let json_constructor = new EncodeJSONWrite;
+    let method = "stock.inventory"
+
+    let id = this.inventory.id;
+    console.log("Location", this.inventory)
+    let values = {
+      state: 'done'
+    }
+    console.log("Updating inventory to confirmed")
+    json_constructor.addNode(method, [id, values])
+    let json = json_constructor.createJSON();
+    this.trytonProvider.write(json).subscribe(
+      data => {
+        console.log("Update successful", data)
+        alert('Inventario confirmado')
+        this.navCtrl.pop()
       })
   }
 }

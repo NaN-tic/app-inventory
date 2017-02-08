@@ -12,7 +12,7 @@
 </ion-header>
 
 <ion-content padding>  <ion-list>
-     <ion-item (click)="itemSelected($event, i)" *ngFor="let i of list_items">
+     <ion-item class="i.state" (click)="itemSelected($event, i)" *ngFor="let i of list_items">
       {{i.location_name}}
       <p>{{i.date}}</p>
      </ion-item>

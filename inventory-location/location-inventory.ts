@@ -41,7 +41,7 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
 
     this.domain = "[" + new EncodeJSONRead().createDomain("type",
       "=", "storage") + "]";
-    this.fields = ["name", "code", "parent.name"]
+    this.fields = ["name", "code"]
     this.loadData();
     this.blur_element = true;
     this.elementInput = false;
@@ -52,7 +52,6 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
     this.myInput.setFocus()
   }
    blurInput(event){
-     console.log("Blured", event)
      if (this.blur_element)
         this.myInput.setFocus();
       this.blur_element = false;
@@ -84,7 +83,7 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
     let json_constructor = new EncodeJSONRead();
     let search_domain = "[" + json_constructor.createDomain(
       "code", "=", this.itemInput.toUpperCase()) + "]"
-    let fields = ['name', 'code', 'parent.name']
+    let fields = ['name', 'code']
     let method = "stock.location"
     json_constructor.addNode(method, search_domain, fields)
     let json = json_constructor.createJson()

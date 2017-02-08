@@ -48,9 +48,21 @@
 	  	<ion-buttons left>
 		  <ion-icon name="ion-ios-arrow-back"></ion-icon>
 	  	</ion-buttons>
-	  	<ion-buttons right>
+	  	<ion-buttons right [hidden]="!not_checking">
+  		  <button [hidden]="saved" [disabled]="elementInput" ion-button icon-right (click)="save()">
+  		    {{'Save' | translate}}
+  		  </button>
+        <button [hidden]="!saved" ion-button icon-right (click)="confirm()">
+  		    {{'Confirm' | translate}}
+  		  </button>
+  		  <ion-icon name="ion-ios-arrow-forward"></ion-icon>
+	  	</ion-buttons>
+      <ion-buttons right [hidden]="not_checking">
   		  <button [disabled]="elementInput" ion-button icon-right (click)="save()">
   		    {{'Save' | translate}}
+  		  </button>
+        <button  ion-button icon-right (click)="confirm()">
+  		    {{'Confirm' | translate}}
   		  </button>
   		  <ion-icon name="ion-ios-arrow-forward"></ion-icon>
 	  	</ion-buttons>
