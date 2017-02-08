@@ -124,7 +124,7 @@ export class InventoryListPage implements AfterViewInit {
     let json_constructor = new EncodeJSONRead;
     let method = "stock.inventory.line";
     let fields = ["product.name", "product.rec_name", "product.codes.number",
-      "product.id", "quantity", "expected_quantity", "state"];
+      "product.id", "quantity", "expected_quantity"];
     let domain = "[" + json_constructor.createDomain(
       "inventory", "=", inventory.id) + "]";
 
@@ -288,7 +288,7 @@ export class InventoryListPage implements AfterViewInit {
     console.log("Location", this.inventory)
     let values = {
       company: this.inventory.company_id,
-      location: this.inventory.location.id,
+      location: this.inventory.location.id ,
       date: this.inventory.date
     }
     json_constructor.addNode(method, [id, values])

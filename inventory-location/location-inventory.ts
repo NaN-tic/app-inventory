@@ -93,7 +93,8 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
         console.log("Location exists", data[method], data[method].length, data[method] > 0);
         if (data[method].length > 0) {
           this.location = data[method];
-          this.navCtrl.push(InventoryListPage, { location: this.location, params: this.navParams.get('param') })
+          console.log("LOcation", this.location)
+          this.navCtrl.push(InventoryListPage, { location: this.location[0], params: this.navParams.get('param') })
         }
         else
           alert("Incorrect Location");
