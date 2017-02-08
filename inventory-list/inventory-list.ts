@@ -130,7 +130,7 @@ export class InventoryListPage implements AfterViewInit {
 
     json_constructor.addNode(method, domain, fields);
     let json = json_constructor.createJson();
-
+    this.inventory.lines = [];
     this.trytonProvider.search(json).subscribe(
       data => {
         console.log("Got data", data);
@@ -149,7 +149,7 @@ export class InventoryListPage implements AfterViewInit {
             id: line.id
           }
           this.item_array.push(this.inventory_line)
-          this.inventory.lines = this.item_array;
+          this.inventory.lines.push(this.inventory_line)
         }
         this.saved = true;
         console.log("Fetched data", this.inventory);
@@ -197,6 +197,7 @@ export class InventoryListPage implements AfterViewInit {
         return true;
       }
     }
+    console.log("COuld not find product")
     return false;
   }
   /**
@@ -226,9 +227,9 @@ export class InventoryListPage implements AfterViewInit {
           quantity: 1,
           id: -1
         };
+        console.log("Updated inventory lines", this.inventory.lines, this.item_array)
         this.item_array.push(this.inventory_line);
-        this.inventory.lines.push(this.inventory_line);
-        console.log("Updated inventory lines", this.inventory.lines)
+        this.inventory.lines.push(this.inventory_line)
         this.lastItem = this.itemInput;
         this.itemInput = "";
       },
