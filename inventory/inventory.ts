@@ -11,6 +11,11 @@ import { InventoriesPage } from '../inventories/inventories'
   selector: 'page-inventory',
   templateUrl: '../../menu/menu.html'
 })
+/**
+ * This class creates the main menu for the inventories.
+ * The user can choose between creating a new inventory or looking at one
+ * already created
+ */
 export class InventoryPage extends MenuPage {
 
   constructor(navCtrl: NavController, translate: TranslateService) {

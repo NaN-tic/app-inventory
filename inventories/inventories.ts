@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
-import { NavController, NavParams } from 'ionic-angular';
+import { NavController, NavParams, Events, LoadingController } from 'ionic-angular';
 import { Locker } from 'angular-safeguard';
+import {TranslateService} from 'ng2-translate';
+
 
 import { InfiniteList } from '../../infinite-list/infinite-list'
 import { EncodeJSONRead } from '../../json/encode-json-read'
@@ -32,12 +34,15 @@ export class InventoriesPage extends InfiniteList{
 	title: string;
 
 	local_storage = this.locker.useDriver(Locker.DRIVERS.LOCAL)
+  loading: any;
 
-
-    constructor(public navCtrl: NavController, public trytond_provider: TrytonProvider,
-    	private navParams: NavParams, public locker: Locker) {
-  		super(navCtrl, trytond_provider)
-  		this.title = "Inventarios";
+    constructor(public navCtrl: NavController,
+      public trytond_provider: TrytonProvider,
+    	private navParams: NavParams, public locker: Locker,
+      public events: Events, private loadingCtrl: LoadingController,
+      private translateService: TranslateService) {
+  		super(navCtrl, trytond_provider, events)
+  		this.title = "Inventories";
   		this.method = "stock.inventory";
 
   		// TODO: might need to change and look for location
@@ -45,6 +50,7 @@ export class InventoriesPage extends InfiniteList{
             "=", "draft") + "]";
         this.fields = ["date", "company.id", "location.name", "location.code",
         "location.parent.name", "location.id", "state"];
+        this.showLoading()
         this.loadData()
   	}
 
@@ -72,12 +78,41 @@ export class InventoriesPage extends InfiniteList{
     	}
     	console.log("Item selected", item)
     	console.log("Creating location and inventory", this.location, this.inventory)
-    	this.navCtrl.push(InventoryListPage,
+    	this.navCtrl.push(InventoryListPage, {param:
     		{
     			location: this.location,
     			params: false,
-    			inventory: this.inventory
-    		})
+    			inventory: this.inventory,
+          new_inventory: false
+    		}
+      })
 	}
+  /**
+   * Shows a loading component on top of the view
+   */
+  private showLoading() {
+    console.log("Showing loading")
+    let loading_text;
+    this.translateService.get('Loading').subscribe(
+      value => {
+        loading_text = value
+      }
+    );
+    this.loading = this.loadingCtrl.create({
+      content: loading_text
+    });
+    this.loading.present();
+    this.hideLoading();
+  }
+
+  /**
+   * Hides the current loading component on the screen
+   */
+  private hideLoading() {
+    console.log("Dismissing loading")
+    this.events.subscribe("Data loading finished", (eventData) => {
+      this.loading.dismiss();
+    })
+  }
 
 }

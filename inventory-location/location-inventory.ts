@@ -1,11 +1,10 @@
 import { Component, ViewChild, Input, AfterViewInit } from '@angular/core';
-import { NavController, NavParams } from 'ionic-angular';
+import { NavController, NavParams, Events } from 'ionic-angular';
 import { InfiniteList } from '../../infinite-list/infinite-list'
 import { EncodeJSONRead } from '../../json/encode-json-read'
 import { TrytonProvider } from '../../providers/tryton-provider'
 // Pages
-import { InventoryListPage } from '../inventory-list/inventory-list'
-
+import { InventoryTypePage } from '../inventory-type/inventory-type'
 // Interfaces
 import { Location } from '../../../models/location'
 
@@ -33,8 +32,8 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
   blur_element: boolean;
 
   constructor(public navCtrl: NavController, public trytond_provider: TrytonProvider,
-  		private navParams: NavParams) {
-    super(navCtrl, trytond_provider)
+  		private navParams: NavParams, public events: Events) {
+    super(navCtrl, trytond_provider, events)
 
     console.log("data", navParams.get('params'))
     this.method = "stock.location";
@@ -72,7 +71,7 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
    */
   itemSelected(event, item) {
     console.log("Item selected", item, "Going to next page", this.navParams.get('param'))
-    this.navCtrl.push(InventoryListPage, { location: item, params: this.navParams.get('param') })
+    this.navCtrl.push(InventoryTypePage, { location: item} )
   }
 
   /**
@@ -82,7 +81,7 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
     console.log("Searching for code", this.itemInput);
     let json_constructor = new EncodeJSONRead();
     let search_domain = "[" + json_constructor.createDomain(
-      "code", "=", this.itemInput.toUpperCase()) + "]"
+      "rec_name", "=", this.itemInput) + "]"
     let fields = ['name', 'code']
     let method = "stock.location"
     json_constructor.addNode(method, search_domain, fields)
@@ -94,7 +93,8 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
         if (data[method].length > 0) {
           this.location = data[method];
           console.log("LOcation", this.location)
-          this.navCtrl.push(InventoryListPage, { location: this.location[0], params: this.navParams.get('param') })
+
+          this.navCtrl.push(InventoryTypePage, { location: this.location[0] });
         }
         else
           alert("Incorrect Location");

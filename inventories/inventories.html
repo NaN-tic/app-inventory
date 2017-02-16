@@ -11,7 +11,8 @@
   </ion-navbar>
 </ion-header>
 
-<ion-content padding>  <ion-list>
+<ion-content padding>
+   <ion-list>
      <ion-item class="i.state" (click)="itemSelected($event, i)" *ngFor="let i of list_items">
       {{i.location_name}}
       <p>{{i.date}}</p>

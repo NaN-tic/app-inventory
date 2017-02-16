@@ -1,6 +1,9 @@
 import { Component, Input, ViewChild, AfterViewInit } from '@angular/core';
 import { Locker } from 'angular-safeguard';
-import { NavController, NavParams, AlertController, Platform } from 'ionic-angular';
+import { NavController, NavParams, AlertController,
+         Platform, LoadingController, Events } from 'ionic-angular';
+import {TranslateService} from 'ng2-translate';
+
 import { EncodeJSONRead } from '../../json/encode-json-read'
 import { EncodeJSONWrite } from '../../json/encode-json-write'
 import { TrytonProvider } from '../../providers/tryton-provider'
@@ -36,54 +39,95 @@ export class InventoryListPage implements AfterViewInit {
   inventory_line: InventoryLines;
 
   local_storage = this.locker.useDriver(Locker.DRIVERS.LOCAL)
+  loading: any;
 
-  elementInput: boolean = false;
+  elementInput: boolean = true;
   new_inventory: boolean = true;
   blur_element: boolean;
   saved: boolean = false;
   not_checking: boolean = true;
 
-  constructor(public navCtrl: NavController, public navParams: NavParams,
+  constructor(
+    public navCtrl: NavController, public navParams: NavParams,
     public trytonProvider: TrytonProvider, public locker: Locker,
-    public alertCtrl: AlertController, public platform: Platform) {
+    public alertCtrl: AlertController, public platform: Platform,
+    public translateService: TranslateService,
+    public loadingCtrl: LoadingController, public events: Events) {
 
     // Get location
-    this.location = navParams.get('location');
-    this.new_inventory = navParams.get('params')
-    console.log("Location", this.location, " New", this.new_inventory)
+    let params = navParams.get('param');
+    this.new_inventory = params.new_inventory
+    this.location = params.location
+    console.log("Location", this.location, " New", navParams.data)
 
     this.blur_element = true;
 
     if (!this.new_inventory) {
+      this.showLoading();
       this.not_checking = false;
-      this.inventory = navParams.get('inventory')
+      this.inventory = params.inventory
       this.fetchInventoryData(this.location, this.inventory)
     }
     else {
+      // Remove preovious view, this will force the stack to to go back
+      // to the location-inventory view
+      navCtrl.remove(navCtrl.length() - 1)
       let current_date = new Date()
       console.log("Current date", current_date);
 
       this.inventory = {
         company_id: this.local_storage.get('UserData')[0].company_id,
         date: this.format_date(current_date),
-        location: navParams.get('location'),
+        location: navParams.get('param').location,
         state: "draft",
         id: -1,
         lines: []
       }
+      if (!params.products_inventory) {
+        console.log("Product inventory", params.products_inventory)
+        this.showLoading()
+        // Create lines
+        this.trytonProvider.rpc_call('model.app.proxy.get_lines', [this.inventory])
+        .subscribe(
+          data => {
+
+            console.log("Received data for complete lines", data)
+            this.inventory.id = data
+            console.log("this.inventory", this.inventory)
+            this.fetchInventoryData(this.location, this.inventory)
+          },
+          error => {
+            console.log("An error occurred", error)
+          }
+        )
+      }
       console.log("Creating new inventory", this.inventory)
     }
-}
+  }
   /**
    * Asks the suer if he/she wants to leave the view
    * @return {Promise<any>} True or false
    */
   ionViewCanLeave(): Promise<any> {
+    console.log("Saving", this.saved)
     if (!this.saved) {
+      let title_alert:string = null;
+      let text_alert: string = null;
+      this.translateService.get('Are you sure you want to leave?').subscribe(
+        value => {
+          title_alert = value
+        }
+      )
+      this.translateService.get('All progress will be lost if you do not save').subscribe(
+        value => {
+          text_alert = value
+        }
+      )
       return new Promise((resolve, reject) => {
         let confirm = this.alertCtrl.create({
-          title: 'Are you sure you want to leave?',
-          message: 'All progress will be lost if you do not save?',
+
+          title: title_alert,
+          message: text_alert,
           enableBackdropDismiss: false,
           buttons: [{
             text: 'OK',
@@ -151,7 +195,13 @@ export class InventoryListPage implements AfterViewInit {
           this.item_array.push(this.inventory_line)
           this.inventory.lines.push(this.inventory_line)
         }
-        this.saved = true;
+        this.hideLoading()
+        // Dont kill me pls
+        setTimeout(() => {
+          this.myInput2.setFocus()
+        },1000);
+        if (!this.new_inventory)
+          this.saved = true;
         console.log("Fetched data", this.inventory);
       },
       error => {
@@ -185,7 +235,6 @@ export class InventoryListPage implements AfterViewInit {
    */
   setProductQuantity(item_code: string, set_quantity: number){
     for (let line of this.item_array) {
-      console.log("COdes", line.product.codes_number, item_code)
       if (line.product.codes_number == item_code) {
         if (Number(this.itemInput) > 100000){
           line.quantity += set_quantity;
@@ -194,6 +243,8 @@ export class InventoryListPage implements AfterViewInit {
         else
           line.quantity = set_quantity
         this.itemInput = '';
+        this.elementInput = false;
+        this.saved = false;
         return true;
       }
     }
@@ -218,7 +269,12 @@ export class InventoryListPage implements AfterViewInit {
       data => {
         console.log("Got product", data);
         if (data[method].length == 0) {
-          alert("The product does not exists")
+          this.translateService.get('The product does not exists').subscribe(
+            value => {
+              let alertTitle = value;
+              alert(alertTitle);
+            }
+          )
           return;
         }
         this.product = data[method][0];
@@ -231,12 +287,31 @@ export class InventoryListPage implements AfterViewInit {
         this.item_array.push(this.inventory_line);
         this.inventory.lines.push(this.inventory_line)
         this.lastItem = this.itemInput;
+        this.elementInput = false;
         this.itemInput = "";
+        this.saved = false;
       },
       error => {
         console.log("Error", error);
-        alert("The product does not exist")
+        this.translateService.get('The product does not exists').subscribe(
+          value => {
+            let alertTitle = value;
+            alert(alertTitle);
+          }
+        )
+        this.itemInput = "";
       });
+  }
+
+  /**
+   * Sets the line quantity to 0
+   * @param  {any}    inventory_line Clicked line
+   * @return {Null}                  No return
+   */
+  setLineZero(inventory_line: any, index){
+    this.item_array[index].quantity = 0;
+    this.saved = false;
+    this.elementInput = false;
   }
 
   /**
@@ -270,6 +345,43 @@ export class InventoryListPage implements AfterViewInit {
   }
 
   /**
+   * Shows a loading component on top of the view
+   */
+  private showLoading() {
+    console.log("Showing loading")
+    let loading_text;
+    this.translateService.get('Loading').subscribe(
+      value => {
+        loading_text = value
+      }
+    )
+    this.loading = this.loadingCtrl.create({
+      content: loading_text
+    })
+    this.loading.present()
+    // Set timeout for loading
+    let timeoutid = setTimeout(() => {
+      this.loading.dismiss();
+      alert('This is taking to long. If you see this something went wrong with the request')
+    },8000);
+    // Cancel timeout if it has been dismissed correctly
+    this.events.subscribe("Loading done", (eventData) => {
+      clearTimeout(timeoutid)
+    })
+  }
+
+  /**
+   * Hides the current loading component on the screen
+   */
+  private hideLoading() {
+    console.log("Dismissing loading")
+    this.loading.dismiss();
+    // Send event to cancel timeout
+    this.events.publish("Loading done")
+    this.myInput2.setFocus();
+  }
+
+  /**
    * Saves the current inventory into tryton.
    * Inventories with no products are not saved
    */
@@ -278,10 +390,7 @@ export class InventoryListPage implements AfterViewInit {
       this.update()
       return;
     }
-    if (this.inventory.lines.length == 0){
-      alert('The inventory has no products');
-      return;
-    }
+
     console.log("Saving");
     let json_constructor = new EncodeJSONWrite;
     let method = "stock.inventory";
@@ -316,6 +425,7 @@ export class InventoryListPage implements AfterViewInit {
             console.log("Created succesfuly", data)
             this.saved = true;
             this.new_inventory = false;
+            return true;
           })
       })
 
