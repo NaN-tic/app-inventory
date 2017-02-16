@@ -92,9 +92,10 @@ export class InventoryListPage implements AfterViewInit {
           data => {
 
             console.log("Received data for complete lines", data)
-            this.inventory.id = data
-            console.log("this.inventory", this.inventory)
-            this.fetchInventoryData(this.location, this.inventory)
+            this.inventory.id = data;
+            console.log("this.inventory", this.inventory);
+            this.fetchInventoryData(this.location, this.inventory);
+            this.elementInput = false;
           },
           error => {
             console.log("An error occurred", error)
@@ -200,8 +201,10 @@ export class InventoryListPage implements AfterViewInit {
         setTimeout(() => {
           this.myInput2.setFocus()
         },1000);
-        if (!this.new_inventory)
+        console.log("New inventory", this.new_inventory)
+        if (this.new_inventory == false){
           this.saved = true;
+        }
         console.log("Fetched data", this.inventory);
       },
       error => {

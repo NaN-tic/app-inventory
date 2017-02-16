@@ -42,7 +42,7 @@ export class InventoriesPage extends InfiniteList{
       public events: Events, private loadingCtrl: LoadingController,
       private translateService: TranslateService) {
   		super(navCtrl, trytond_provider, events)
-  		this.title = "Inventories";
+  		this.title = "InventoriesMenu";
   		this.method = "stock.inventory";
 
   		// TODO: might need to change and look for location
