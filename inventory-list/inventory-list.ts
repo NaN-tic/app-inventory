@@ -73,7 +73,6 @@ export class InventoryListPage implements AfterViewInit {
       // to the location-inventory view
       navCtrl.remove(navCtrl.length() - 1)
       let current_date = new Date()
-      console.log("Current date", current_date);
 
       this.inventory = {
         company_id: this.local_storage.get('UserData')[0].company_id,
@@ -83,24 +82,17 @@ export class InventoryListPage implements AfterViewInit {
         id: -1,
         lines: []
       }
+      // If the user choosed a complete inventory
       if (!params.products_inventory) {
         console.log("Product inventory", params.products_inventory)
-        this.showLoading()
-        // Create lines
-        this.trytonProvider.rpc_call('model.app.proxy.get_lines', [this.inventory])
-        .subscribe(
-          data => {
+        this.showLoading();
+        // Save current inventory
+        this.save();
+        events.subscribe('Save procedure completed', (eventData) => {
+          this.completeLines();
+          events.unsubscribe('Save procedure completed');
+        })
 
-            console.log("Received data for complete lines", data)
-            this.inventory.id = data;
-            console.log("this.inventory", this.inventory);
-            this.fetchInventoryData(this.location, this.inventory);
-            this.elementInput = false;
-          },
-          error => {
-            console.log("An error occurred", error)
-          }
-        )
       }
       console.log("Creating new inventory", this.inventory)
     }
@@ -165,7 +157,7 @@ export class InventoryListPage implements AfterViewInit {
    * @param {Location}  location  Information about the location
    * @param {Inventory} inventory The inventory information
    */
-  fetchInventoryData(location: Location, inventory: Inventory) {
+  private fetchInventoryData(location: Location, inventory: Inventory) {
     let json_constructor = new EncodeJSONRead;
     let method = "stock.inventory.line";
     let fields = ["product.name", "product.rec_name", "product.codes.number",
@@ -196,6 +188,7 @@ export class InventoryListPage implements AfterViewInit {
           this.item_array.push(this.inventory_line)
           this.inventory.lines.push(this.inventory_line)
         }
+        this.events.publish("Fetch complete")
         this.hideLoading()
         // Dont kill me pls
         setTimeout(() => {
@@ -216,7 +209,7 @@ export class InventoryListPage implements AfterViewInit {
    * Listener for an input event. Sets the done button enabled or disabled
    * @param {Object} event Event description
    */
-  inputChange(event) {
+  public inputChange(event) {
     console.log("Dected a change on the input", this.itemInput, Number(this.itemInput));
     if (this.itemInput && Number(this.itemInput) > 100000) {
       console.log("Setting product quantity")
@@ -236,7 +229,7 @@ export class InventoryListPage implements AfterViewInit {
    * @param  {number} set_quantity Quantity to add or to set
    * @return {boolean}             True if an item was found
    */
-  setProductQuantity(item_code: string, set_quantity: number){
+  private setProductQuantity(item_code: string, set_quantity: number){
     for (let line of this.item_array) {
       if (line.product.codes_number == item_code) {
         if (Number(this.itemInput) > 100000){
@@ -258,7 +251,7 @@ export class InventoryListPage implements AfterViewInit {
    * Gets the data from the given product barcode
    * @param {string} barcode Bar code number of a product
    */
-  getProduct(barcode: string) {
+  public getProduct(barcode: string) {
 
     let json_constructor = new EncodeJSONRead;
     let method = "product.product";
@@ -311,7 +304,7 @@ export class InventoryListPage implements AfterViewInit {
    * @param  {any}    inventory_line Clicked line
    * @return {Null}                  No return
    */
-  setLineZero(inventory_line: any, index){
+  private setLineZero(inventory_line: any, index){
     this.item_array[index].quantity = 0;
     this.saved = false;
     this.elementInput = false;
@@ -362,15 +355,6 @@ export class InventoryListPage implements AfterViewInit {
       content: loading_text
     })
     this.loading.present()
-    // Set timeout for loading
-    let timeoutid = setTimeout(() => {
-      this.loading.dismiss();
-      alert('This is taking to long. If you see this something went wrong with the request')
-    },8000);
-    // Cancel timeout if it has been dismissed correctly
-    this.events.subscribe("Loading done", (eventData) => {
-      clearTimeout(timeoutid)
-    })
   }
 
   /**
@@ -384,6 +368,40 @@ export class InventoryListPage implements AfterViewInit {
     this.myInput2.setFocus();
   }
 
+  /**
+   * Calls complete lines method in tryton. This method will complete
+   * the inventory with the necessary data
+   * @param  {string = 'True'}   fill   If set to true the server will create
+   *                                    new lines, if set to false it will not
+   *                                    create them, but will calculate them
+   * @return {boolean}                  True if succesful
+   */
+  private completeLines(fill:number = 1): Promise<boolean> {
+    console.log("Starting complete lines procedure");
+    console.log("Settings:", this.inventory, fill);
+    return new Promise((resolve, reject) => {
+      this.trytonProvider.rpc_call('model.stock.inventory.complete_lines',
+        [[this.inventory.id], fill]).subscribe(
+        data => {
+          console.log("Received data for complete lines", data)
+          if (fill){
+            this.fetchInventoryData(this.location, this.inventory);
+            this.elementInput = false;
+            // Set amounts to 0
+            this.events.subscribe('Fetch complete', (eventData) => {
+              for (let line of this.inventory.lines) line.quantity = 0;
+              this.events.unsubscribe('Fetch complete')
+            })
+          }
+          resolve(data);
+        },
+        error => {
+          console.log("An error occurred", error)
+          reject(error)
+        }
+      )
+    })
+  }
   /**
    * Saves the current inventory into tryton.
    * Inventories with no products are not saved
@@ -409,10 +427,10 @@ export class InventoryListPage implements AfterViewInit {
 
     this.trytonProvider.write(json).subscribe(
       data => {
+        console.log("Inventory saved succesfuly!")
         this.inventory.id = data[method][0];
         let json_lines = new EncodeJSONWrite;
         let inventory_line = "stock.inventory.line"
-        console.log("data", data)
         for (let line of this.inventory.lines) {
           id = line.id;
           let values = {
@@ -425,11 +443,13 @@ export class InventoryListPage implements AfterViewInit {
         let lines = json_lines.createJSON()
         this.trytonProvider.write(lines).subscribe(
           data => {
-            console.log("Created succesfuly", data)
+            console.log("Inventory lines saved succesfuly!")
             this.saved = true;
             this.new_inventory = false;
+            this.events.publish("Save procedure completed")
             return true;
           })
+
       })
 
   }
@@ -461,20 +481,26 @@ export class InventoryListPage implements AfterViewInit {
   confirm() {
     let json_constructor = new EncodeJSONWrite;
     let method = "stock.inventory"
-
     let id = this.inventory.id;
-    console.log("Location", this.inventory)
-    let values = {
-      state: 'done'
+    // TODO: This is going to be removed later on
+    this.completeLines(0).then((data) => {
+      this.trytonProvider.rpc_call("model.stock.inventory.confirm",
+        [[id]]).subscribe(
+        data => {
+          console.log("Confirm successful");
+          this.navCtrl.pop();
+        },
+        error => {
+          console.log("An error occurred", error)
+          // Show an alert when an error occurs
+          let error_alert;
+          this.translateService.get('Generic_Error').subscribe(
+            value => {
+              error_alert = value
+            }
+          );
+          alert(error_alert)
+        })
+      });
     }
-    console.log("Updating inventory to confirmed")
-    json_constructor.addNode(method, [id, values])
-    let json = json_constructor.createJSON();
-    this.trytonProvider.write(json).subscribe(
-      data => {
-        console.log("Update successful", data)
-        alert('Inventario confirmado')
-        this.navCtrl.pop()
-      })
-  }
 }
