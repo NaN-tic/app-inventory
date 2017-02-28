@@ -40,10 +40,22 @@ export class InventoryListPage implements AfterViewInit {
 
   local_storage = this.locker.useDriver(Locker.DRIVERS.LOCAL)
   loading: any;
-
+  /**
+   * Enables or disables the save button
+   * True -> Disabled, False -> Enabled
+   * @type {boolean}
+   */
   elementInput: boolean = true;
+  /**
+   * Set to true if we are creating a new inventory
+   * @type {boolean}
+   */
   new_inventory: boolean = true;
   blur_element: boolean;
+  /**
+   * Set to true when the inventory has been saved
+   * @type {boolean}
+   */
   saved: boolean = false;
   not_checking: boolean = true;
 
@@ -62,9 +74,11 @@ export class InventoryListPage implements AfterViewInit {
 
     this.blur_element = true;
 
-    if (!this.new_inventory) {
+    if (this.new_inventory.constructor.name != 'Object' &&
+        this.new_inventory == false) {
       this.showLoading();
       this.not_checking = false;
+      this.saved = true;
       this.inventory = params.inventory
       this.fetchInventoryData(this.location, this.inventory)
     }
@@ -82,6 +96,7 @@ export class InventoryListPage implements AfterViewInit {
         id: -1,
         lines: []
       }
+      console.log("Object keys", Object.keys(this.inventory))
       // If the user choosed a complete inventory
       if (!params.products_inventory) {
         console.log("Product inventory", params.products_inventory)
@@ -90,6 +105,7 @@ export class InventoryListPage implements AfterViewInit {
         this.save();
         events.subscribe('Save procedure completed', (eventData) => {
           this.completeLines();
+          this.saved = false;
           events.unsubscribe('Save procedure completed');
         })
 
@@ -194,10 +210,6 @@ export class InventoryListPage implements AfterViewInit {
         setTimeout(() => {
           this.myInput2.setFocus()
         },1000);
-        console.log("New inventory", this.new_inventory)
-        if (this.new_inventory == false){
-          this.saved = true;
-        }
         console.log("Fetched data", this.inventory);
       },
       error => {
@@ -225,7 +237,9 @@ export class InventoryListPage implements AfterViewInit {
   }
   /**
    * Sets the quantity for a given code
-   * @param  {string} item_code    Code of the item to look for
+   * @param  {string} item_code    Code of the item to look for.
+   *                               If the code is smaller than 100000 its considered
+   *                               a quantity for the previous product
    * @param  {number} set_quantity Quantity to add or to set
    * @return {boolean}             True if an item was found
    */
@@ -304,7 +318,7 @@ export class InventoryListPage implements AfterViewInit {
    * @param  {any}    inventory_line Clicked line
    * @return {Null}                  No return
    */
-  private setLineZero(inventory_line: any, index){
+  public setLineZero(inventory_line: any, index){
     this.item_array[index].quantity = 0;
     this.saved = false;
     this.elementInput = false;
@@ -389,6 +403,7 @@ export class InventoryListPage implements AfterViewInit {
             this.elementInput = false;
             // Set amounts to 0
             this.events.subscribe('Fetch complete', (eventData) => {
+              this.saved = false;
               for (let line of this.inventory.lines) line.quantity = 0;
               this.events.unsubscribe('Fetch complete')
             })
@@ -427,7 +442,7 @@ export class InventoryListPage implements AfterViewInit {
 
     this.trytonProvider.write(json).subscribe(
       data => {
-        console.log("Inventory saved succesfuly!")
+        console.log("Inventory saved succesfuly!", data)
         this.inventory.id = data[method][0];
         let json_lines = new EncodeJSONWrite;
         let inventory_line = "stock.inventory.line"
@@ -473,11 +488,15 @@ export class InventoryListPage implements AfterViewInit {
     let lines = json_lines.createJSON()
     this.trytonProvider.write(lines).subscribe(
       data => {
+        this.saved = true;
         console.log("Update successful", data)
         alert('Inventario actualizado')
       })
   }
-
+  /**
+   * Confirms the current inventory.
+   * @return {null}
+   */
   confirm() {
     let json_constructor = new EncodeJSONWrite;
     let method = "stock.inventory"
@@ -493,6 +512,7 @@ export class InventoryListPage implements AfterViewInit {
         error => {
           console.log("An error occurred", error)
           // Show an alert when an error occurs
+          // TODO: Add this as a global function
           let error_alert;
           this.translateService.get('Generic_Error').subscribe(
             value => {

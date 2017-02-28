@@ -13,6 +13,7 @@
         <ion-input #focusInput
         (focus)="setFocus($event)"
         [(ngModel)]="itemInput"
+        (ngModelChange)="liveReload($event)"
         (blur)="blurInput($event)"
         (keyup.enter)="inputChange($event)"
         autofocus></ion-input>
