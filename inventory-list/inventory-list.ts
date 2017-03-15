@@ -75,7 +75,7 @@ export class InventoryListPage implements AfterViewInit {
       let current_date = new Date()
 
       this.inventory = {
-        company_id: this.local_storage.get('UserData')[0].company_id,
+        company: this.local_storage.get('UserData')[0].company_id,
         date: this.format_date(current_date),
         location: navParams.get('param').location,
         state: "draft",
@@ -175,7 +175,7 @@ export class InventoryListPage implements AfterViewInit {
         for (let line of data[method]) {
           this.product = {
             name: line.product_name,
-            codes_number: line.product_codes_number,
+            'codes.number': line.product_codes_number,
             rec_name: line.rec_name,
             id: line.product_id
           }
@@ -231,7 +231,7 @@ export class InventoryListPage implements AfterViewInit {
    */
   private setProductQuantity(item_code: string, set_quantity: number){
     for (let line of this.item_array) {
-      if (line.product.codes_number == item_code) {
+      if (line.product['codes.number'] == item_code) {
         if (Number(this.itemInput) > 100000){
           line.quantity += set_quantity;
           this.lastItem = this.itemInput;
@@ -304,7 +304,7 @@ export class InventoryListPage implements AfterViewInit {
    * @param  {any}    inventory_line Clicked line
    * @return {Null}                  No return
    */
-  private setLineZero(inventory_line: any, index){
+  setLineZero(inventory_line: any, index){
     this.item_array[index].quantity = 0;
     this.saved = false;
     this.elementInput = false;
@@ -418,7 +418,7 @@ export class InventoryListPage implements AfterViewInit {
     let id = this.inventory.id;
     console.log("Location", this.inventory)
     let values = {
-      company: this.inventory.company_id,
+      company: this.inventory.company,
       location: this.inventory.location.id ,
       date: this.inventory.date
     }
@@ -479,8 +479,6 @@ export class InventoryListPage implements AfterViewInit {
   }
 
   confirm() {
-    let json_constructor = new EncodeJSONWrite;
-    let method = "stock.inventory"
     let id = this.inventory.id;
     // TODO: This is going to be removed later on
     this.completeLines(0).then((data) => {

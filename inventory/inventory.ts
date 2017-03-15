@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
-import {TranslateService} from 'ng2-translate';
 
 import { MenuPage } from '../../menu/menu'
 import { LocationInventoryPage } from '../inventory-location/location-inventory'
@@ -18,8 +17,8 @@ import { InventoriesPage } from '../inventories/inventories'
  */
 export class InventoryPage extends MenuPage {
 
-  constructor(navCtrl: NavController, translate: TranslateService) {
-    super(navCtrl, translate)
+  constructor(navCtrl: NavController) {
+    super(navCtrl)
     this.title = 'Inventarios'
     /**
      * New menus go here,

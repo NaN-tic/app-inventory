@@ -38,8 +38,8 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
     console.log("data", navParams.get('params'))
     this.method = "stock.location";
 
-    this.domain = "[" + new EncodeJSONRead().createDomain("type",
-      "=", "storage") + "]";
+    this.domain = [new EncodeJSONRead().createDomain("type",
+      "=", "storage")];
     this.fields = ["name", "code"]
     this.loadData();
     this.blur_element = true;
