@@ -38,7 +38,7 @@ export class InventoriesPage extends InfiniteList{
 
     constructor(public navCtrl: NavController,
       public trytond_provider: TrytonProvider,
-    	private navParams: NavParams, public locker: Locker,
+      private navParams: NavParams, public locker: Locker,
       public events: Events, private loadingCtrl: LoadingController,
       private translateService: TranslateService) {
   		super(navCtrl, trytond_provider, events)
@@ -46,8 +46,8 @@ export class InventoriesPage extends InfiniteList{
   		this.method = "stock.inventory";
 
   		// TODO: might need to change and look for location
-        this.domain = "[" + new EncodeJSONRead().createDomain("state",
-            "=", "draft") + "]";
+        this.domain = [new EncodeJSONRead().createDomain("state",
+            "=", "draft")];
         this.fields = ["date", "company.id", "location.name", "location.code",
         "location.parent.name", "location.id", "state"];
         this.showLoading()
@@ -66,11 +66,11 @@ export class InventoriesPage extends InfiniteList{
     	this.location = {
     		name: item.location_name,
     		code: item.location_code,
-    		parent_name: item.location_parent_name,
+    		'parent.name': item.location_parent_name,
     		id: item.location_id
     	}
     	this.inventory = {
-    		company_id: item.company_id,
+    		company: item.company_id,
     		date: item.date,
         state: item.state,
     		location: this.location,

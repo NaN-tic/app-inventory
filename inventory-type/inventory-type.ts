@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { NavController, NavParams } from 'ionic-angular';
-import {TranslateService} from 'ng2-translate';
 
 import { MenuPage } from '../../menu/menu'
 import { InventoryListPage } from '../inventory-list/inventory-list'
@@ -17,11 +16,10 @@ import { InventoryListPage } from '../inventory-list/inventory-list'
  */
 export class InventoryTypePage extends MenuPage {
 
-  constructor(navCtrl: NavController, translate: TranslateService,
-    private navParams: NavParams) {
+  constructor(navCtrl: NavController, private navParams: NavParams) {
 
-    super(navCtrl, translate)
-    this.title = 'Inventory_Type'
+    super(navCtrl)
+    this.title = 'Inventory Type'
     /**
      * New menus go here,
      * params = true means we are creating a new inventory.
@@ -30,12 +28,12 @@ export class InventoryTypePage extends MenuPage {
     let location = navParams.get('location')
     console.log("Location", location)
     this.menu = [
-      { name: "Products_Inventory",
+      { name: "Products Inventory",
         page: InventoryListPage,
         params: {location:location, new_inventory: true, products_inventory: true}
       },
       {
-        name: "Complete_Inventory",
+        name: "Complete Inventory",
         page: InventoryListPage,
         params: {location:location, new_inventory:true, products_inventory: false}
       }

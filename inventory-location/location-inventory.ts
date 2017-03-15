@@ -31,14 +31,17 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
 
   blur_element: boolean;
 
-  json_constructor = new EncodeJSONRead();
-
   constructor(public navCtrl: NavController, public trytond_provider: TrytonProvider,
   		private navParams: NavParams, public events: Events) {
     super(navCtrl, trytond_provider, events)
 
     console.log("data", navParams.get('params'))
-    this.setDefaultValues()
+    this.method = "stock.location";
+
+    this.domain = [new EncodeJSONRead().createDomain("type",
+      "=", "storage")];
+    this.fields = ["name", "code"]
+    this.loadData();
     this.blur_element = true;
     this.elementInput = false;
   }
@@ -109,30 +112,7 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
       this.elementInput = true;
       this.goForward();
     }
-    else{
+    else
       this.elementInput = false;
-      this.setDefaultValues()
-    }
-  }
-  // This does nothing as of now
-  // Should get the entries that are similar to the ones the user typed
-  liveReload(event) {
-    if (!this.itemInput) {
-      this.setDefaultValues();
-      return;
-    }
-    console.log("Setting up new live request")
-    this.domain = "[" + this.json_constructor.createDomain(
-      "rec_name", "ilike", '%'+this.itemInput+'%')+ ', '+
-    this.json_constructor.createDomain("type", "=", "storage")+ "]"
-    //this.loadData()
-  }
-
-  private setDefaultValues() {
-    this.method = "stock.location";
-    this.domain = "[" + this.json_constructor.createDomain("type",
-      "=", "storage") + "]";
-    this.fields = ["name", "code"]
-    this.loadData();
   }
 }
