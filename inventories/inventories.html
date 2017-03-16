@@ -14,7 +14,7 @@
 <ion-content padding>
    <ion-list>
      <ion-item class="i.state" (click)="itemSelected($event, i)" *ngFor="let i of list_items">
-      {{i.location_name}}
+      {{i['location.name']}}
       <p>{{i.date}}</p>
      </ion-item>
    </ion-list>

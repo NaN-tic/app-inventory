@@ -1,5 +1,7 @@
 import { Component, ViewChild, Input, AfterViewInit } from '@angular/core';
 import { NavController, NavParams, Events } from 'ionic-angular';
+import { Keyboard } from 'ionic-native';
+
 import { InfiniteList } from '../../infinite-list/infinite-list'
 import { EncodeJSONRead } from '../../json/encode-json-read'
 import { TrytonProvider } from '../../providers/tryton-provider'
@@ -48,17 +50,20 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
 
   ngAfterViewInit() {
     console.log("set input")
-    this.myInput.setFocus()
+    document.getElementById('test').focus()
+    window.
   }
    blurInput(event){
      if (this.blur_element)
-        this.myInput.setFocus();
+        document.getElementById('test').focus()
       this.blur_element = false;
+      Keyboard.close()
    }
    ionViewDidEnter() {
      console.log("Inside view");
      this.blur_element = true;
-     this.myInput.setFocus();
+     document.getElementById('test').focus();
+     Keyboard.close()
    }
    setFocus(event) {
      console.log("Focus set")
@@ -80,8 +85,8 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
   goForward() {
     console.log("Searching for code", this.itemInput);
     let json_constructor = new EncodeJSONRead();
-    let search_domain = "[" + json_constructor.createDomain(
-      "rec_name", "=", this.itemInput) + "]"
+    let search_domain = [json_constructor.createDomain(
+      "rec_name", "=", this.itemInput)]
     let fields = ['name', 'code']
     let method = "stock.location"
     json_constructor.addNode(method, search_domain, fields)

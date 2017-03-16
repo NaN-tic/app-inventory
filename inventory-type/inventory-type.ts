@@ -28,12 +28,12 @@ export class InventoryTypePage extends MenuPage {
     let location = navParams.get('location')
     console.log("Location", location)
     this.menu = [
-      { name: "Products Inventory",
+      { name: "Products_Inventory",
         page: InventoryListPage,
         params: {location:location, new_inventory: true, products_inventory: true}
       },
       {
-        name: "Complete Inventory",
+        name: "Complete_Inventory",
         page: InventoryListPage,
         params: {location:location, new_inventory:true, products_inventory: false}
       }

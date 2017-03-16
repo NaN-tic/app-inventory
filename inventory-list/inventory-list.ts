@@ -1,7 +1,8 @@
-import { Component, Input, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, Input, ViewChild, AfterViewInit, ElementRef, Renderer } from '@angular/core';
 import { Locker } from 'angular-safeguard';
 import { NavController, NavParams, AlertController,
-         Platform, LoadingController, Events } from 'ionic-angular';
+  Platform, LoadingController, Events } from 'ionic-angular';
+import { Keyboard } from 'ionic-native';
 import {TranslateService} from 'ng2-translate';
 
 import { EncodeJSONRead } from '../../json/encode-json-read'
@@ -25,7 +26,7 @@ export class InventoryListPage implements AfterViewInit {
 
   @Input()
   itemInput: string;
-  @ViewChild('focusInput2') myInput2;
+  @ViewChild('focusInput2') myInput2: ElementRef;
   lastItem: string;
   /**
    * Items to display
@@ -63,7 +64,7 @@ export class InventoryListPage implements AfterViewInit {
     public navCtrl: NavController, public navParams: NavParams,
     public trytonProvider: TrytonProvider, public locker: Locker,
     public alertCtrl: AlertController, public platform: Platform,
-    public translateService: TranslateService,
+    public translateService: TranslateService,private rd: Renderer,
     public loadingCtrl: LoadingController, public events: Events) {
 
     // Get location
@@ -75,7 +76,7 @@ export class InventoryListPage implements AfterViewInit {
     this.blur_element = true;
 
     if (this.new_inventory.constructor.name != 'Object' &&
-        this.new_inventory == false) {
+      this.new_inventory == false) {
       this.showLoading();
       this.not_checking = false;
       this.saved = true;
@@ -87,13 +88,13 @@ export class InventoryListPage implements AfterViewInit {
       // to the location-inventory view
       navCtrl.remove(navCtrl.length() - 1)
       let current_date = new Date()
-
       this.inventory = {
-        company_id: this.local_storage.get('UserData')[0].company_id,
+        company: this.local_storage.get('UserData').company,
         date: this.format_date(current_date),
         location: navParams.get('param').location,
         state: "draft",
         id: -1,
+        lost_found: 7,
         lines: []
       }
       console.log("Object keys", Object.keys(this.inventory))
@@ -120,7 +121,7 @@ export class InventoryListPage implements AfterViewInit {
   ionViewCanLeave(): Promise<any> {
     console.log("Saving", this.saved)
     if (!this.saved) {
-      let title_alert:string = null;
+      let title_alert: string = null;
       let text_alert: string = null;
       this.translateService.get('Are you sure you want to leave?').subscribe(
         value => {
@@ -144,29 +145,33 @@ export class InventoryListPage implements AfterViewInit {
               resolve();
             },
           }, {
-            text: 'Cancel',
-            handler: () => {
-              reject();
-            }
-          }],
+              text: 'Cancel',
+              handler: () => {
+                reject();
+              }
+            }],
         });
         confirm.present();
       })
     }
   }
   ngAfterViewInit() {
-    console.log("Ion init")
-    this.myInput2.setFocus()
+    console.log("Ion init", document.getElementById('test'))
+    //this.myInput2.focus()
+    document.getElementById('test').focus()
+    //this.rd.invokeElementMethod(this.myInput2.nativeElement, 'focus')
   }
 
   /**
    * Fallback if the input loses focus
    */
-  blurInputs(event){
+  blurInputs(event) {
+ 
     if (this.blur_element)
-      this.myInput2.setFocus();
+        document.getElementById('test').focus()
+      //this.rd.invokeElementMethod(this.myInput2.nativeElement, 'focus')
     this.blur_element = false;
-   }
+  }
 
   /**
    * Fetchs the data from the selected inventory
@@ -177,9 +182,9 @@ export class InventoryListPage implements AfterViewInit {
     let json_constructor = new EncodeJSONRead;
     let method = "stock.inventory.line";
     let fields = ["product.name", "product.rec_name", "product.codes.number",
-      "product.id", "quantity", "expected_quantity"];
-    let domain = "[" + json_constructor.createDomain(
-      "inventory", "=", inventory.id) + "]";
+      "product", "quantity", "expected_quantity"];
+    let domain = [json_constructor.createDomain(
+      "inventory", "=", inventory.id)];
 
     json_constructor.addNode(method, domain, fields);
     let json = json_constructor.createJson();
@@ -190,8 +195,8 @@ export class InventoryListPage implements AfterViewInit {
 
         for (let line of data[method]) {
           this.product = {
-            name: line.product_name,
-            codes_number: line.product_codes_number,
+            name: line['product.name'],
+            'codes.number': line['product.codes_number'],
             rec_name: line.rec_name,
             id: line.product_id
           }
@@ -208,9 +213,10 @@ export class InventoryListPage implements AfterViewInit {
         this.hideLoading()
         // Dont kill me pls
         setTimeout(() => {
-          this.myInput2.setFocus()
-        },1000);
-        console.log("Fetched data", this.inventory);
+          //this.myInput2.setFocus()
+          document.getElementById('test').focus()
+        }, 1000);
+        console.log("Fetched data", this.item_array);
       },
       error => {
         console.log("A wild error was found", error);
@@ -233,7 +239,8 @@ export class InventoryListPage implements AfterViewInit {
       if (!this.setProductQuantity(this.lastItem, Number(this.itemInput)))
         alert('No se ha podido encontrar el producto')
     }
-    this.myInput2.setFocus()
+    //this.myInput2.setFocus()
+    document.getElementById('test').focus()
   }
   /**
    * Sets the quantity for a given code
@@ -243,10 +250,10 @@ export class InventoryListPage implements AfterViewInit {
    * @param  {number} set_quantity Quantity to add or to set
    * @return {boolean}             True if an item was found
    */
-  private setProductQuantity(item_code: string, set_quantity: number){
+  private setProductQuantity(item_code: string, set_quantity: number) {
     for (let line of this.item_array) {
-      if (line.product.codes_number == item_code) {
-        if (Number(this.itemInput) > 100000){
+      if (line.product['codes.number'] == item_code) {
+        if (Number(this.itemInput) > 100000) {
           line.quantity += set_quantity;
           this.lastItem = this.itemInput;
         }
@@ -270,8 +277,8 @@ export class InventoryListPage implements AfterViewInit {
     let json_constructor = new EncodeJSONRead;
     let method = "product.product";
     let fields = ["name", "codes.number", "rec_name"];
-    let domain = "[" + json_constructor.createDomain(
-      'rec_name', '=', barcode) + "]";
+    let domain = [json_constructor.createDomain(
+      'rec_name', '=', barcode)];
 
     json_constructor.addNode(method, domain, fields);
     let json = json_constructor.createJson();
@@ -318,7 +325,7 @@ export class InventoryListPage implements AfterViewInit {
    * @param  {any}    inventory_line Clicked line
    * @return {Null}                  No return
    */
-  public setLineZero(inventory_line: any, index){
+  public setLineZero(inventory_line: any, index) {
     this.item_array[index].quantity = 0;
     this.saved = false;
     this.elementInput = false;
@@ -379,7 +386,7 @@ export class InventoryListPage implements AfterViewInit {
     this.loading.dismiss();
     // Send event to cancel timeout
     this.events.publish("Loading done")
-    this.myInput2.setFocus();
+    //this.myInput2.setFocus();
   }
 
   /**
@@ -390,7 +397,7 @@ export class InventoryListPage implements AfterViewInit {
    *                                    create them, but will calculate them
    * @return {boolean}                  True if succesful
    */
-  private completeLines(fill:number = 1): Promise<boolean> {
+  private completeLines(fill: number = 1): Promise<boolean> {
     console.log("Starting complete lines procedure");
     console.log("Settings:", this.inventory, fill);
     return new Promise((resolve, reject) => {
@@ -398,7 +405,7 @@ export class InventoryListPage implements AfterViewInit {
         [[this.inventory.id], fill]).subscribe(
         data => {
           console.log("Received data for complete lines", data)
-          if (fill){
+          if (fill) {
             this.fetchInventoryData(this.location, this.inventory);
             this.elementInput = false;
             // Set amounts to 0
@@ -414,7 +421,7 @@ export class InventoryListPage implements AfterViewInit {
           console.log("An error occurred", error)
           reject(error)
         }
-      )
+        )
     })
   }
   /**
@@ -432,14 +439,16 @@ export class InventoryListPage implements AfterViewInit {
     let method = "stock.inventory";
     let id = this.inventory.id;
     console.log("Location", this.inventory)
+
     let values = {
-      company: this.inventory.company_id,
-      location: this.inventory.location.id ,
-      date: this.inventory.date
+      company: this.inventory.company,
+      location: this.inventory.location.id,
+      date: this.inventory.date,
+      lost_found: this.inventory.lost_found
     }
     json_constructor.addNode(method, [id, values])
     let json = json_constructor.createJSON()
-
+    console.log(values)
     this.trytonProvider.write(json).subscribe(
       data => {
         console.log("Inventory saved succesfuly!", data)
@@ -448,6 +457,7 @@ export class InventoryListPage implements AfterViewInit {
         let inventory_line = "stock.inventory.line"
         for (let line of this.inventory.lines) {
           id = line.id;
+          console.log("Line", line)
           let values = {
             inventory: data[method][0],
             product: line.product.id,
@@ -455,6 +465,7 @@ export class InventoryListPage implements AfterViewInit {
           }
           json_lines.addNode(inventory_line, [id, values])
         }
+        console.log(inventory_line)
         let lines = json_lines.createJSON()
         this.trytonProvider.write(lines).subscribe(
           data => {
@@ -521,6 +532,6 @@ export class InventoryListPage implements AfterViewInit {
           );
           alert(error_alert)
         })
-      });
-    }
+    });
+  }
 }

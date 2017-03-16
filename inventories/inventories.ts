@@ -48,8 +48,8 @@ export class InventoriesPage extends InfiniteList{
   		// TODO: might need to change and look for location
         this.domain = [new EncodeJSONRead().createDomain("state",
             "=", "draft")];
-        this.fields = ["date", "company.id", "location.name", "location.code",
-        "location.parent.name", "location.id", "state"];
+        this.fields = ["date", "company", "location.name", "location.code",
+        "location.parent.name", "location", "state"];
         this.showLoading()
         this.loadData()
   	}
@@ -74,6 +74,7 @@ export class InventoriesPage extends InfiniteList{
     		date: item.date,
         state: item.state,
     		location: this.location,
+        lost_found: 7,
     		id: item.id
     	}
     	console.log("Item selected", item)
