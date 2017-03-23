@@ -50,19 +50,21 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
 
   ngAfterViewInit() {
     console.log("set input")
-    document.getElementById('test').focus()
-    window.
+
+    //document.getElementById('test').focus()
+    Keyboard.close()
   }
    blurInput(event){
-     if (this.blur_element)
-        document.getElementById('test').focus()
-      this.blur_element = false;
-      Keyboard.close()
+       if (this.blur_element){
+            document.getElementById('test').focus()
+            //Keyboard.close()
+        }
+        this.blur_element = false;
    }
    ionViewDidEnter() {
      console.log("Inside view");
      this.blur_element = true;
-     document.getElementById('test').focus();
+     //document.getElementById('test').focus();
      Keyboard.close()
    }
    setFocus(event) {

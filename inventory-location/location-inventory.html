@@ -16,7 +16,8 @@
         (ngModelChange)="liveReload($event)"
         (blur)="blurInput($event)"
         (keyup.enter)="inputChange($event)"
-        autofocus/>
+        autofocus
+        />
       </ion-item>
      	<button ion-item *ngFor="let i of list_items" (click)="itemSelected($event, i)">
       	{{i.name}}
