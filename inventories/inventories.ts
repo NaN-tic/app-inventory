@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+    import { Component } from '@angular/core';
 import { NavController, NavParams, Events, LoadingController } from 'ionic-angular';
 import { Locker } from 'angular-safeguard';
 import {TranslateService} from 'ng2-translate';
@@ -12,12 +12,8 @@ import { Location } from '../../../models/interfaces/location'
 
 import { InventoryListPage } from '../inventory-list/inventory-list'
 
-/*
-  Generated class for the Inventories page.
+import { Routing } from '../../../pages/routing/routing';
 
-  See http://ionicframework.com/docs/v2/components/#navigation for more info on
-  Ionic pages and navigation.
-*/
 @Component({
   selector: 'page-inventories',
   templateUrl: 'inventories.html'
@@ -34,7 +30,7 @@ export class InventoriesPage extends InfiniteList{
 	title: string;
 
 	local_storage = this.locker.useDriver(Locker.DRIVERS.LOCAL)
-  loading: any;
+    loading: any;
 
     constructor(public navCtrl: NavController,
       public trytond_provider: TrytonProvider,
@@ -79,12 +75,12 @@ export class InventoriesPage extends InfiniteList{
     	}
     	console.log("Item selected", item)
     	console.log("Creating location and inventory", this.location, this.inventory)
-    	this.navCtrl.push(InventoryListPage, {param:
+    	this.navCtrl.push(new Routing().getNext(this.constructor.name), {params:
     		{
     			location: this.location,
     			params: false,
     			inventory: this.inventory,
-          new_inventory: false
+                new_inventory: false
     		}
       })
 	}

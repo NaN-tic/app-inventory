@@ -13,7 +13,6 @@
         <input id="test" #focusInput
         (focus)="setFocus($event)"
         [(ngModel)]="itemInput"
-        (ngModelChange)="liveReload($event)"
         (blur)="blurInput($event)"
         (keyup.enter)="inputChange($event)"
         autofocus

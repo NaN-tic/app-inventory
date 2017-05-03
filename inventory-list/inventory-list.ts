@@ -60,23 +60,27 @@ export class InventoryListPage implements AfterViewInit {
   saved: boolean = false;
   not_checking: boolean = true;
 
+  inventory_fields: Array<string> = [];
+
   constructor(
     public navCtrl: NavController, public navParams: NavParams,
     public trytonProvider: TrytonProvider, public locker: Locker,
     public alertCtrl: AlertController, public platform: Platform,
-    public translateService: TranslateService,private rd: Renderer,
+    public translateService: TranslateService,public rd: Renderer,
     public loadingCtrl: LoadingController, public events: Events) {
 
     // Get location
-    let params = navParams.get('param');
+    console.log("Params", navParams.data)
+    let params = navParams.get('params');
     this.new_inventory = params.new_inventory
     this.location = params.location
     console.log("Location", this.location, " New", navParams.data)
 
     this.blur_element = true;
+    this.setDefaultFields();
 
     if (this.new_inventory.constructor.name != 'Object' &&
-      this.new_inventory == false) {
+        this.new_inventory == false) {
       this.showLoading();
       this.not_checking = false;
       this.saved = true;
@@ -91,7 +95,7 @@ export class InventoryListPage implements AfterViewInit {
       this.inventory = {
         company: this.local_storage.get('UserData').company,
         date: this.format_date(current_date),
-        location: navParams.get('param').location,
+        location: navParams.get('params').location,
         state: "draft",
         id: -1,
         lost_found: 7,
@@ -166,7 +170,7 @@ export class InventoryListPage implements AfterViewInit {
    * Fallback if the input loses focus
    */
   blurInputs(event) {
- 
+
     if (this.blur_element)
         document.getElementById('test').focus()
       //this.rd.invokeElementMethod(this.myInput2.nativeElement, 'focus')
@@ -181,8 +185,7 @@ export class InventoryListPage implements AfterViewInit {
   private fetchInventoryData(location: Location, inventory: Inventory) {
     let json_constructor = new EncodeJSONRead;
     let method = "stock.inventory.line";
-    let fields = ["product.name", "product.rec_name", "product.codes.number",
-      "product", "quantity", "expected_quantity"];
+    let fields = this.inventory_fields;
     let domain = [json_constructor.createDomain(
       "inventory", "=", inventory.id)];
 
@@ -227,20 +230,25 @@ export class InventoryListPage implements AfterViewInit {
    * Listener for an input event. Sets the done button enabled or disabled
    * @param {Object} event Event description
    */
-  public inputChange(event) {
+  public inputChange(event): boolean {
     console.log("Dected a change on the input", this.itemInput, Number(this.itemInput));
     if (this.itemInput && Number(this.itemInput) > 100000) {
       console.log("Setting product quantity")
-      if (!this.setProductQuantity(this.itemInput, 1))
-        this.getProduct(this.itemInput)
+      if (!this.setProductQuantity(this.itemInput, 1)){
+          if (!this.getProduct(this.itemInput))
+            return false;
+        }
     }
     else if (this.itemInput && Number(this.itemInput) < 100000) {
       // Should never show the alert
-      if (!this.setProductQuantity(this.lastItem, Number(this.itemInput)))
+      if (!this.setProductQuantity(this.lastItem, Number(this.itemInput))){
         alert('No se ha podido encontrar el producto')
+        return false;
+        }
     }
     //this.myInput2.setFocus()
     document.getElementById('test').focus()
+    return true;
   }
   /**
    * Sets the quantity for a given code
@@ -292,7 +300,7 @@ export class InventoryListPage implements AfterViewInit {
               alert(alertTitle);
             }
           )
-          return;
+          return true;
         }
         this.product = data[method][0];
         this.inventory_line = {
@@ -330,6 +338,11 @@ export class InventoryListPage implements AfterViewInit {
     this.saved = false;
     this.elementInput = false;
   }
+
+    public setDefaultFields(){
+        this.inventory_fields = ["product.name", "product.rec_name", "product.codes.number",
+          "product", "quantity", "expected_quantity"];
+    }
 
   /**
    * Sets the date to a format that tryton understands
@@ -534,4 +547,13 @@ export class InventoryListPage implements AfterViewInit {
         })
     });
   }
+
+    private valuesLinesToSave(line: any) {
+        let values = {
+            inventory: this.inventory.id,
+            product: line.product.id,
+            quantity: line.quantity,
+        }
+        return values
+    }
 }

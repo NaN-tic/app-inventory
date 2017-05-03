@@ -10,8 +10,11 @@ import { InventoryTypePage } from '../inventory-type/inventory-type'
 // Interfaces
 import { Location } from '../../../models/location'
 
+import { Routing } from '../../../pages/routing/routing';
+
+
 @Component({
-  selector: 'onChanges',
+  selector: 'location-inventory-page',
   templateUrl: 'location-inventory.html'
 })
 /**
@@ -78,7 +81,9 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
    */
   itemSelected(event, item) {
     console.log("Item selected", item, "Going to next page", this.navParams.get('param'))
-    this.navCtrl.push(InventoryTypePage, { location: item} )
+    this.navCtrl.push(new Routing().getNext(this.constructor.name), { params: {
+        location: item,
+        new_inventory: true}} )
   }
 
   /**
@@ -101,8 +106,9 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
           this.location = data[method];
           console.log("LOcation", this.location)
 
-          this.navCtrl.push(InventoryTypePage, { location: this.location[0] });
-        }
+          this.navCtrl.push(new Routing().getNext(this.constructor.name), { params: {
+              location: this.location[0],
+              new_inventory: true}} )        }
         else
           alert("Incorrect Location");
       })
