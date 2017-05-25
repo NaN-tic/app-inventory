@@ -72,6 +72,7 @@ export class InventoryListPage implements AfterViewInit {
     // Get location
     console.log("Params", navParams.data)
     let params = navParams.get('params');
+    console.log("loashcdas", params)
     this.new_inventory = params.new_inventory
     this.location = params.location
     console.log("Location", this.location, " New", navParams.data)
@@ -195,14 +196,15 @@ export class InventoryListPage implements AfterViewInit {
     this.trytonProvider.search(json).subscribe(
       data => {
         console.log("Got data", data);
-
+        let product_ids = [];
         for (let line of data[method]) {
           this.product = {
             name: line['product.name'],
-            'codes.number': line['product.codes_number'],
+            codes_number: line.product.codes_number,
             rec_name: line.rec_name,
-            id: line.product_id
+            id: line.product
           }
+          product_ids.push(this.product.id)
           this.inventory_line = {
             product: this.product,
             quantity: line.quantity,
@@ -214,6 +216,7 @@ export class InventoryListPage implements AfterViewInit {
         }
         this.events.publish("Fetch complete")
         this.hideLoading()
+        this.search_code(product_ids)
         // Dont kill me pls
         setTimeout(() => {
           //this.myInput2.setFocus()
@@ -226,7 +229,33 @@ export class InventoryListPage implements AfterViewInit {
       })
   }
 
-	/**
+  public search_code(product_ids){
+    let json_constructor = new EncodeJSONRead;
+    console.log("Product ids", product_ids)
+    let method = "product.code";
+    let fields = ["product", "number"];
+    let domain = [json_constructor.createDomain(
+      "product", "in", product_ids)];
+
+    json_constructor.addNode(method, domain, fields);
+    let json = json_constructor.createJson();
+    this.trytonProvider.search(json).subscribe(
+      data => {
+        for (let value of data[method]) {
+          let res = this.inventory.lines.filter(product => product.product.id == value.product)
+          let res2 = this.item_array.filter(product => product.product.id == value.product)
+          if (res !== undefined) {
+            res[0].product.codes_number = value.number;
+            res2[0].product.codes_number = value.number;
+          }
+        }
+      },
+      error => {
+        console.log("Error", error)
+      })
+  }
+
+  /**
    * Listener for an input event. Sets the done button enabled or disabled
    * @param {Object} event Event description
    */
@@ -259,14 +288,27 @@ export class InventoryListPage implements AfterViewInit {
    * @return {boolean}             True if an item was found
    */
   private setProductQuantity(item_code: string, set_quantity: number) {
+    console.log("Item array", this.item_array)
     for (let line of this.item_array) {
-      if (line.product['codes.number'] == item_code) {
+      console.log("COdes", line.product)
+      if (line.product.codes_number == item_code.toString()) {
         if (Number(this.itemInput) > 100000) {
           line.quantity += set_quantity;
           this.lastItem = this.itemInput;
         }
         else
           line.quantity = set_quantity
+        // Set element to first position
+        let index_array = this.item_array.indexOf(line);
+        let index_list = this.inventory.lines.indexOf(line);
+
+        console.log("Deleting element at position", index_list)
+        this.item_array.splice(index_array, 1);
+        this.inventory.lines.splice(index_list, 1);
+
+        this.item_array.unshift(line);
+        this.inventory.lines.unshift(line);
+
         this.itemInput = '';
         this.elementInput = false;
         this.saved = false;
@@ -277,14 +319,14 @@ export class InventoryListPage implements AfterViewInit {
     return false;
   }
   /**
-   * Gets the data from the given product barcode
+   * Gets the data from the given product barcode    "8470001508058" 8470001508058
    * @param {string} barcode Bar code number of a product
    */
   public getProduct(barcode: string) {
 
     let json_constructor = new EncodeJSONRead;
     let method = "product.product";
-    let fields = ["name", "codes.number", "rec_name"];
+    let fields = ["name", "rec_name"];
     let domain = [json_constructor.createDomain(
       'rec_name', '=', barcode)];
 
@@ -303,14 +345,14 @@ export class InventoryListPage implements AfterViewInit {
           return true;
         }
         this.product = data[method][0];
+        this.product.codes_number = barcode;
         this.inventory_line = {
           product: this.product,
           quantity: 1,
-          id: -1
+          id: -1,
         };
-        console.log("Updated inventory lines", this.inventory.lines, this.item_array)
-        this.item_array.push(this.inventory_line);
-        this.inventory.lines.push(this.inventory_line)
+        this.item_array.unshift(this.inventory_line);
+        this.inventory.lines.unshift(this.inventory_line)
         this.lastItem = this.itemInput;
         this.elementInput = false;
         this.itemInput = "";
@@ -340,7 +382,7 @@ export class InventoryListPage implements AfterViewInit {
   }
 
     public setDefaultFields(){
-        this.inventory_fields = ["product.name", "product.rec_name", "product.codes.number",
+        this.inventory_fields = ["product.name", "product.rec_name", "product.codes",
           "product", "quantity", "expected_quantity"];
     }
 
@@ -417,7 +459,6 @@ export class InventoryListPage implements AfterViewInit {
       this.trytonProvider.rpc_call('model.stock.inventory.complete_lines',
         [[this.inventory.id], fill]).subscribe(
         data => {
-          console.log("Received data for complete lines", data)
           if (fill) {
             this.fetchInventoryData(this.location, this.inventory);
             this.elementInput = false;
@@ -487,8 +528,16 @@ export class InventoryListPage implements AfterViewInit {
             this.new_inventory = false;
             this.events.publish("Save procedure completed")
             return true;
+          },
+          error => {
+            console.log("Error", error);
+            alert(error.messages[0])
           })
 
+      },
+      error => {
+        console.log("Error", error);
+        alert(error.messages[0])
       })
 
   }
@@ -515,6 +564,10 @@ export class InventoryListPage implements AfterViewInit {
         this.saved = true;
         console.log("Update successful", data)
         alert('Inventario actualizado')
+      },
+      error => {
+        console.log("Error", error);
+        alert(error.messages[0])
       })
   }
   /**
@@ -548,12 +601,16 @@ export class InventoryListPage implements AfterViewInit {
     });
   }
 
-    private valuesLinesToSave(line: any) {
-        let values = {
-            inventory: this.inventory.id,
-            product: line.product.id,
-            quantity: line.quantity,
-        }
-        return values
-    }
+  /**
+   * Creats an object with the values to save
+   * @param {any} line Line to save
+   */
+  private valuesLinesToSave(line: any) {
+      let values = {
+          inventory: this.inventory.id,
+          product: line.product.id,
+          quantity: line.quantity,
+      }
+      return values
+  }
 }

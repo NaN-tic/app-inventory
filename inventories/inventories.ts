@@ -60,10 +60,10 @@ export class InventoriesPage extends InfiniteList{
     	console.log("Item selected", item, "Going to next page", this.navParams.get('param'))
 
     	this.location = {
-    		name: item.location_name,
-    		code: item.location_code,
-    		'parent.name': item.location_parent_name,
-    		id: item.location_id
+    		name: item['location.name'],
+    		code: item['location.code'],
+    		'parent.name': item['locationparent_name'],
+    		id: item.location
     	}
     	this.inventory = {
     		company: item.company_id,

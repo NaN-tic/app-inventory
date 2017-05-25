@@ -26,17 +26,17 @@ export class InventoryTypePage extends MenuPage {
      * params = true means we are creating a new inventory.
      * @type {Array}
      */
-    let location = navParams.get('location')
+    let params = navParams.get('params')
     console.log("Location", location)
     this.menu = [
       { name: "Products_Inventory",
         page: new Routing().getNext(this.constructor.name),
-        params: {location:location, new_inventory: true, products_inventory: true}
+        params: {location:params.location, new_inventory: true, products_inventory: true}
       },
       {
         name: "Complete_Inventory",
         page: new Routing().getNext(this.constructor.name),
-        params: {location:location, new_inventory:true, products_inventory: false}
+        params: {location:params.location, new_inventory:true, products_inventory: false}
       }
     ]
   }
