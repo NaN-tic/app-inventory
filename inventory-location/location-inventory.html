@@ -11,12 +11,9 @@
       <ion-item>
         <label color="primary"> {{'Location' | translate}} :</label>
         <input id="test" #focusInput
-        (focus)="setFocus($event)"
         [(ngModel)]="itemInput"
-        (blur)="blurInput($event)"
-        (keyup.enter)="inputChange($event)"
-        autofocus
-        />
+        (document:keypress)="readLocation($event)
+        [readonly]="true"/>
       </ion-item>
      	<button ion-item *ngFor="let i of list_items" (click)="itemSelected($event, i)">
       	{{i.name}}

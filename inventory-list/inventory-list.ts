@@ -1,8 +1,7 @@
-import { Component, Input, ViewChild, AfterViewInit, ElementRef, Renderer } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef, Renderer, HostListener } from '@angular/core';
 import { Locker } from 'angular-safeguard';
 import { NavController, NavParams, AlertController,
   Platform, LoadingController, Events } from 'ionic-angular';
-import { Keyboard } from 'ionic-native';
 import {TranslateService} from 'ng2-translate';
 
 import { EncodeJSONRead } from '../../json/encode-json-read'
@@ -11,6 +10,7 @@ import { TrytonProvider } from '../../providers/tryton-provider'
 
 import { Products } from '../../../models/interfaces/products'
 import { Inventory, InventoryLines } from '../../../models/interfaces/inventory'
+import { InventoryPage } from '../inventory/inventory'
 
 /*
   Generated class for the InventoryList page.
@@ -22,10 +22,16 @@ import { Inventory, InventoryLines } from '../../../models/interfaces/inventory'
   selector: 'page-inventory-list',
   templateUrl: 'inventory-list.html'
 })
-export class InventoryListPage implements AfterViewInit {
+export class InventoryListPage {
 
   @Input()
-  itemInput: string;
+  itemInput: string = '';
+  /**
+   * Barcode value
+   * @type {string}
+   */
+  barcode: string = '';
+
   @ViewChild('focusInput2') myInput2: ElementRef;
   lastItem: string;
   /**
@@ -62,6 +68,7 @@ export class InventoryListPage implements AfterViewInit {
 
   inventory_fields: Array<string> = [];
 
+
   constructor(
     public navCtrl: NavController, public navParams: NavParams,
     public trytonProvider: TrytonProvider, public locker: Locker,
@@ -70,12 +77,9 @@ export class InventoryListPage implements AfterViewInit {
     public loadingCtrl: LoadingController, public events: Events) {
 
     // Get location
-    console.log("Params", navParams.data)
     let params = navParams.get('params');
-    console.log("loashcdas", params)
     this.new_inventory = params.new_inventory
     this.location = params.location
-    console.log("Location", this.location, " New", navParams.data)
 
     this.blur_element = true;
     this.setDefaultFields();
@@ -91,7 +95,7 @@ export class InventoryListPage implements AfterViewInit {
     else {
       // Remove preovious view, this will force the stack to to go back
       // to the location-inventory view
-      navCtrl.remove(navCtrl.length() - 1)
+      //navCtrl.remove(navCtrl.length() - 1)
       let current_date = new Date()
       this.inventory = {
         company: this.local_storage.get('UserData').company,
@@ -102,10 +106,8 @@ export class InventoryListPage implements AfterViewInit {
         lost_found: 7,
         lines: []
       }
-      console.log("Object keys", Object.keys(this.inventory))
       // If the user choosed a complete inventory
       if (!params.products_inventory) {
-        console.log("Product inventory", params.products_inventory)
         this.showLoading();
         // Save current inventory
         this.save();
@@ -123,6 +125,7 @@ export class InventoryListPage implements AfterViewInit {
    * Asks the suer if he/she wants to leave the view
    * @return {Promise<any>} True or false
    */
+  
   ionViewCanLeave(): Promise<any> {
     console.log("Saving", this.saved)
     if (!this.saved) {
@@ -160,12 +163,6 @@ export class InventoryListPage implements AfterViewInit {
       })
     }
   }
-  ngAfterViewInit() {
-    console.log("Ion init", document.getElementById('test'))
-    //this.myInput2.focus()
-    document.getElementById('test').focus()
-    //this.rd.invokeElementMethod(this.myInput2.nativeElement, 'focus')
-  }
 
   /**
    * Fallback if the input loses focus
@@ -200,7 +197,7 @@ export class InventoryListPage implements AfterViewInit {
         for (let line of data[method]) {
           this.product = {
             name: line['product.name'],
-            codes_number: line.product.codes_number,
+            codes_number: [],
             rec_name: line.rec_name,
             id: line.product
           }
@@ -217,11 +214,7 @@ export class InventoryListPage implements AfterViewInit {
         this.events.publish("Fetch complete")
         this.hideLoading()
         this.search_code(product_ids)
-        // Dont kill me pls
-        setTimeout(() => {
-          //this.myInput2.setFocus()
-          document.getElementById('test').focus()
-        }, 1000);
+
         console.log("Fetched data", this.item_array);
       },
       error => {
@@ -245,38 +238,61 @@ export class InventoryListPage implements AfterViewInit {
           let res = this.inventory.lines.filter(product => product.product.id == value.product)
           let res2 = this.item_array.filter(product => product.product.id == value.product)
           if (res !== undefined) {
-            res[0].product.codes_number = value.number;
-            res2[0].product.codes_number = value.number;
+            res[0].product.codes_number.push(value.number);
+            res2[0].product.codes_number.push(value.number);
           }
         }
       },
       error => {
         console.log("Error", error)
+      },
+      () => {
+        console.log("Done gathering product numbers", this.item_array)
       })
+  }
+  /**
+   * Reads the input from the keayboard and creates an string until the 'Enter'
+   * key is pressed. Then calls the checkInput method
+   * @param {keypress'} 'document' where to check
+   * @param {[type]}    '$event'  event with the pressed key
+   */
+  @HostListener('document:keypress', ['$event'])
+  public readInput(event) {
+    console.log("Key event", event.key)
+    switch(event.key) {
+      case 'undefined':
+        break;
+      case 'Enter':
+      this.itemInput = this.barcode
+        this.checkInput(null);
+        break;
+      default:
+        this.barcode += event.key;
+    }
   }
 
   /**
-   * Listener for an input event. Sets the done button enabled or disabled
-   * @param {Object} event Event description
+   * Checks wether or not the given barcode exisit in the system and adds
+   * a quantity to it if it already exisit or adds it to the list
+   * @param  {string}  data barcode or quantity to add
+   * @return {boolean}      True if completed correctly
    */
-  public inputChange(event): boolean {
-    console.log("Dected a change on the input", this.itemInput, Number(this.itemInput));
-    if (this.itemInput && Number(this.itemInput) > 100000) {
+  public checkInput(event): boolean {
+    console.log("Dected a change on the input", this.barcode, Number(this.barcode));
+    if (this.barcode.length >= 5) {
       console.log("Setting product quantity")
-      if (!this.setProductQuantity(this.itemInput, 1)){
-          if (!this.getProduct(this.itemInput))
+      if (!this.setProductQuantity(this.barcode, 1)){
+          if (!this.getProduct(this.barcode))
             return false;
         }
     }
-    else if (this.itemInput && Number(this.itemInput) < 100000) {
+    else if (this.barcode.length < 5) {
       // Should never show the alert
-      if (!this.setProductQuantity(this.lastItem, Number(this.itemInput))){
+      if (!this.setProductQuantity(this.lastItem, Number(this.barcode))){
         alert('No se ha podido encontrar el producto')
         return false;
         }
     }
-    //this.myInput2.setFocus()
-    document.getElementById('test').focus()
     return true;
   }
   /**
@@ -290,11 +306,11 @@ export class InventoryListPage implements AfterViewInit {
   private setProductQuantity(item_code: string, set_quantity: number) {
     console.log("Item array", this.item_array)
     for (let line of this.item_array) {
-      console.log("COdes", line.product)
-      if (line.product.codes_number == item_code.toString()) {
-        if (Number(this.itemInput) > 100000) {
+      console.log("Product", line.product)
+      if (line.product.codes_number.indexOf(item_code.toString()) >= 0) {
+        if (this.barcode.length > 5) {
           line.quantity += set_quantity;
-          this.lastItem = this.itemInput;
+          this.lastItem = this.barcode;
         }
         else
           line.quantity = set_quantity
@@ -310,6 +326,7 @@ export class InventoryListPage implements AfterViewInit {
         this.inventory.lines.unshift(line);
 
         this.itemInput = '';
+        this.barcode = '';
         this.elementInput = false;
         this.saved = false;
         return true;
@@ -319,7 +336,7 @@ export class InventoryListPage implements AfterViewInit {
     return false;
   }
   /**
-   * Gets the data from the given product barcode    "8470001508058" 8470001508058
+   * Gets the data from the given product barcode 
    * @param {string} barcode Bar code number of a product
    */
   public getProduct(barcode: string) {
@@ -342,10 +359,11 @@ export class InventoryListPage implements AfterViewInit {
               alert(alertTitle);
             }
           )
+          this.itemInput = '';
           return true;
         }
         this.product = data[method][0];
-        this.product.codes_number = barcode;
+        this.product.codes_number = [barcode];
         this.inventory_line = {
           product: this.product,
           quantity: 1,
@@ -356,6 +374,7 @@ export class InventoryListPage implements AfterViewInit {
         this.lastItem = this.itemInput;
         this.elementInput = false;
         this.itemInput = "";
+        this.barcode = '';
         this.saved = false;
       },
       error => {
@@ -366,7 +385,8 @@ export class InventoryListPage implements AfterViewInit {
             alert(alertTitle);
           }
         )
-        this.itemInput = "";
+        this.itemInput = '';
+        this.barcode = '';
       });
   }
 
@@ -381,10 +401,18 @@ export class InventoryListPage implements AfterViewInit {
     this.elementInput = false;
   }
 
-    public setDefaultFields(){
-        this.inventory_fields = ["product.name", "product.rec_name", "product.codes",
-          "product", "quantity", "expected_quantity"];
-    }
+  /**
+   * Clears the input
+   */
+  public clearInput(): void{
+    this.itemInput = '';
+    this.barcode = '';
+  }
+
+  public setDefaultFields(){
+      this.inventory_fields = ["product.name", "product.rec_name", "product.codes",
+        "product", "quantity", "expected_quantity"];
+  }
 
   /**
    * Sets the date to a format that tryton understands
@@ -572,11 +600,8 @@ export class InventoryListPage implements AfterViewInit {
   }
   /**
    * Confirms the current inventory.
-   * @return {null}
    */
-  confirm() {
-    let json_constructor = new EncodeJSONWrite;
-    let method = "stock.inventory"
+  confirm() :void{
     let id = this.inventory.id;
     // TODO: This is going to be removed later on
     this.completeLines(0).then((data) => {
@@ -612,5 +637,12 @@ export class InventoryListPage implements AfterViewInit {
           quantity: line.quantity,
       }
       return values
+  }
+
+  public keyboardInput(event: KeyboardEvent) {
+
+    if( event.keyCode == 13) {
+      this.itemInput = this.barcode
+    }
   }
 }

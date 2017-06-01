@@ -1,12 +1,10 @@
-import { Component, ViewChild, Input, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, Input, AfterViewInit, HostListener } from '@angular/core';
 import { NavController, NavParams, Events } from 'ionic-angular';
 import { Keyboard } from 'ionic-native';
 
 import { InfiniteList } from '../../infinite-list/infinite-list'
 import { EncodeJSONRead } from '../../json/encode-json-read'
 import { TrytonProvider } from '../../providers/tryton-provider'
-// Pages
-import { InventoryTypePage } from '../inventory-type/inventory-type'
 // Interfaces
 import { Location } from '../../../models/location'
 
@@ -15,7 +13,7 @@ import { Routing } from '../../../pages/routing/routing';
 
 @Component({
   selector: 'location-inventory-page',
-  templateUrl: 'location-inventory.html'
+  templateUrl: 'location-inventory.html',
 })
 /**
  * This class extends the infinite list class to create a list of the possible
@@ -26,9 +24,12 @@ import { Routing } from '../../../pages/routing/routing';
 export class LocationInventoryPage extends InfiniteList implements AfterViewInit{
 
   @Input()
-  itemInput: string;
+  itemInput: string = '';
+
+  location_code: string = '';
   @ViewChild('focusInput') myInput;
   item: string
+
 
   elementInput: boolean = false;
 
@@ -37,7 +38,7 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
   blur_element: boolean;
 
   constructor(public navCtrl: NavController, public trytond_provider: TrytonProvider,
-  		private navParams: NavParams, public events: Events) {
+  		public navParams: NavParams, public events: Events) {
     super(navCtrl, trytond_provider, events)
 
     console.log("data", navParams.get('params'))
@@ -85,7 +86,6 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
         location: item,
         new_inventory: true}} )
   }
-
   /**
    * Go to the next stage, check if the entered location is valid
    */
@@ -104,13 +104,22 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
         console.log("Location exists", data[method], data[method].length, data[method] > 0);
         if (data[method].length > 0) {
           this.location = data[method];
-          console.log("LOcation", this.location)
+          // Clear input field
+          this.itemInput = '';
+          this.location_code = '';
 
-          this.navCtrl.push(new Routing().getNext(this.constructor.name), { params: {
+          this.navCtrl.setRoot(new Routing().getNext(this.constructor.name), { params: {
               location: this.location[0],
-              new_inventory: true}} )        }
-        else
+              new_inventory: true}} )      
+        }
+        else{
           alert("Incorrect Location");
+          this.itemInput = '';
+          this.location_code = '';
+        }
+      },
+      error => {
+        console.log("Error", error)
       })
 
   }
@@ -127,5 +136,9 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
     }
     else
       this.elementInput = false;
+  }
+
+  ngOnDestroy() {
+    console.log("Destroying element")
   }
 }

@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 
 import { MenuPage } from '../../menu/menu'
-import { LocationInventoryPage } from '../inventory-location/location-inventory'
 import { InventoriesPage } from '../inventories/inventories'
+import { Routing } from '../../../pages/routing/routing';
 
 
 @Component({
@@ -26,7 +26,7 @@ export class InventoryPage extends MenuPage {
      * @type {Array}
      */
     this.menu = [
-      { name: "Inventories", page: LocationInventoryPage, params: true },
+      { name: "Inventories", page: new Routing().getNext('INVENTORY_LOCATION_MENU'), params: true },
       { name: "Inventory List", page: InventoriesPage, params: false }
     ]
   }

@@ -1,4 +1,4 @@
-    import { Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { NavController, NavParams, Events, LoadingController } from 'ionic-angular';
 import { Locker } from 'angular-safeguard';
 import {TranslateService} from 'ng2-translate';
@@ -9,8 +9,6 @@ import { EncodeJSONRead } from '../../json/encode-json-read'
 import { TrytonProvider } from '../../providers/tryton-provider'
 import { Inventory } from '../../../models/interfaces/inventory'
 import { Location } from '../../../models/interfaces/location'
-
-import { InventoryListPage } from '../inventory-list/inventory-list'
 
 import { Routing } from '../../../pages/routing/routing';
 

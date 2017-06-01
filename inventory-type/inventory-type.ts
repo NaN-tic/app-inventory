@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { NavController, NavParams } from 'ionic-angular';
 
 import { MenuPage } from '../../menu/menu'
-import { InventoryListPage } from '../inventory-list/inventory-list'
 
 import { Routing } from '../../../pages/routing/routing';
 
