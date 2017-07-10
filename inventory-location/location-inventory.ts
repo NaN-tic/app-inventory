@@ -1,4 +1,4 @@
-import { Component, ViewChild, Input, AfterViewInit, HostListener } from '@angular/core';
+import { Component, ViewChild, Input, AfterViewInit } from '@angular/core';
 import { NavController, NavParams, Events } from 'ionic-angular';
 import { Keyboard } from 'ionic-native';
 
@@ -74,6 +74,13 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
    setFocus(event) {
      console.log("Focus set")
    }
+       /**
+   * Clears the input
+   */
+    public clearInput(): void{
+    this.itemInput = '';
+    this.location_code = '';
+  }
   /**
    * Gets called when a location from the list is selected
    * @param {Object} event   Event description

@@ -9,11 +9,15 @@
     <ion-list>
 
       <ion-item>
-        <label color="primary"> {{'Location' | translate}} :</label>
-        <input id="test" #focusInput
+        <ion-label color="primary"> {{'Location' | translate}} :</ion-label>
+        <ion-input id="location_input" #locationInput2
         [(ngModel)]="itemInput"
-        (document:keypress)="readLocation($event)
-        [readonly]="true"/>
+        [readonly]="true" autofocus>
+        </ion-input>
+        <button (click)="clearInput()" ion-button icon-only
+          class="zero_button">
+          <ion-icon name="close"></ion-icon>
+        </button>
       </ion-item>
      	<button ion-item *ngFor="let i of list_items" (click)="itemSelected($event, i)">
       	{{i.name}}

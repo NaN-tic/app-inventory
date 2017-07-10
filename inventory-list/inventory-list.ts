@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, ElementRef, Renderer, HostListener } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef, Renderer } from '@angular/core';
 import { Locker } from 'angular-safeguard';
 import { NavController, NavParams, AlertController,
   Platform, LoadingController, Events } from 'ionic-angular';
@@ -10,14 +10,8 @@ import { TrytonProvider } from '../../providers/tryton-provider'
 
 import { Products } from '../../../models/interfaces/products'
 import { Inventory, InventoryLines } from '../../../models/interfaces/inventory'
-import { InventoryPage } from '../inventory/inventory'
 
-/*
-  Generated class for the InventoryList page.
 
-  See http://ionicframework.com/docs/v2/components/#navigation for more info on
-  Ionic pages and navigation.
-*/
 @Component({
   selector: 'page-inventory-list',
   templateUrl: 'inventory-list.html'
@@ -192,7 +186,6 @@ export class InventoryListPage {
     this.inventory.lines = [];
     this.trytonProvider.search(json).subscribe(
       data => {
-        console.log("Got data", data);
         let product_ids = [];
         for (let line of data[method]) {
           this.product = {
@@ -214,8 +207,6 @@ export class InventoryListPage {
         this.events.publish("Fetch complete")
         this.hideLoading()
         this.search_code(product_ids)
-
-        console.log("Fetched data", this.item_array);
       },
       error => {
         console.log("A wild error was found", error);
@@ -224,7 +215,6 @@ export class InventoryListPage {
 
   public search_code(product_ids){
     let json_constructor = new EncodeJSONRead;
-    console.log("Product ids", product_ids)
     let method = "product.code";
     let fields = ["product", "number"];
     let domain = [json_constructor.createDomain(
@@ -250,26 +240,6 @@ export class InventoryListPage {
         console.log("Done gathering product numbers", this.item_array)
       })
   }
-  /**
-   * Reads the input from the keayboard and creates an string until the 'Enter'
-   * key is pressed. Then calls the checkInput method
-   * @param {keypress'} 'document' where to check
-   * @param {[type]}    '$event'  event with the pressed key
-   */
-  @HostListener('document:keypress', ['$event'])
-  public readInput(event) {
-    console.log("Key event", event.key)
-    switch(event.key) {
-      case 'undefined':
-        break;
-      case 'Enter':
-      this.itemInput = this.barcode
-        this.checkInput(null);
-        break;
-      default:
-        this.barcode += event.key;
-    }
-  }
 
   /**
    * Checks wether or not the given barcode exisit in the system and adds
@@ -278,9 +248,7 @@ export class InventoryListPage {
    * @return {boolean}      True if completed correctly
    */
   public checkInput(event): boolean {
-    console.log("Dected a change on the input", this.barcode, Number(this.barcode));
     if (this.barcode.length >= 5) {
-      console.log("Setting product quantity")
       if (!this.setProductQuantity(this.barcode, 1)){
           if (!this.getProduct(this.barcode))
             return false;
@@ -304,9 +272,8 @@ export class InventoryListPage {
    * @return {boolean}             True if an item was found
    */
   private setProductQuantity(item_code: string, set_quantity: number) {
-    console.log("Item array", this.item_array)
+    console.log("Item quantity", item_code, set_quantity)
     for (let line of this.item_array) {
-      console.log("Product", line.product)
       if (line.product.codes_number.indexOf(item_code.toString()) >= 0) {
         if (this.barcode.length > 5) {
           line.quantity += set_quantity;
@@ -318,7 +285,6 @@ export class InventoryListPage {
         let index_array = this.item_array.indexOf(line);
         let index_list = this.inventory.lines.indexOf(line);
 
-        console.log("Deleting element at position", index_list)
         this.item_array.splice(index_array, 1);
         this.inventory.lines.splice(index_list, 1);
 
@@ -332,7 +298,6 @@ export class InventoryListPage {
         return true;
       }
     }
-    console.log("COuld not find product")
     return false;
   }
   /**
@@ -351,7 +316,6 @@ export class InventoryListPage {
     let json = json_constructor.createJson();
     this.trytonProvider.search(json).subscribe(
       data => {
-        console.log("Got product", data);
         if (data[method].length == 0) {
           this.translateService.get('The product does not exists').subscribe(
             value => {
@@ -359,7 +323,6 @@ export class InventoryListPage {
               alert(alertTitle);
             }
           )
-          this.itemInput = '';
           return true;
         }
         this.product = data[method][0];
@@ -373,8 +336,6 @@ export class InventoryListPage {
         this.inventory.lines.unshift(this.inventory_line)
         this.lastItem = this.itemInput;
         this.elementInput = false;
-        this.itemInput = "";
-        this.barcode = '';
         this.saved = false;
       },
       error => {
@@ -385,6 +346,8 @@ export class InventoryListPage {
             alert(alertTitle);
           }
         )
+      },
+      () => {
         this.itemInput = '';
         this.barcode = '';
       });
@@ -465,7 +428,6 @@ export class InventoryListPage {
    * Hides the current loading component on the screen
    */
   private hideLoading() {
-    console.log("Dismissing loading")
     this.loading.dismiss();
     // Send event to cancel timeout
     this.events.publish("Loading done")
@@ -481,8 +443,6 @@ export class InventoryListPage {
    * @return {boolean}                  True if succesful
    */
   private completeLines(fill: number = 1): Promise<boolean> {
-    console.log("Starting complete lines procedure");
-    console.log("Settings:", this.inventory, fill);
     return new Promise((resolve, reject) => {
       this.trytonProvider.rpc_call('model.stock.inventory.complete_lines',
         [[this.inventory.id], fill]).subscribe(
@@ -516,11 +476,9 @@ export class InventoryListPage {
       return;
     }
 
-    console.log("Saving");
     let json_constructor = new EncodeJSONWrite;
     let method = "stock.inventory";
     let id = this.inventory.id;
-    console.log("Location", this.inventory)
 
     let values = {
       company: this.inventory.company,
@@ -530,16 +488,13 @@ export class InventoryListPage {
     }
     json_constructor.addNode(method, [id, values])
     let json = json_constructor.createJSON()
-    console.log(values)
     this.trytonProvider.write(json).subscribe(
       data => {
-        console.log("Inventory saved succesfuly!", data)
         this.inventory.id = data[method][0];
         let json_lines = new EncodeJSONWrite;
         let inventory_line = "stock.inventory.line"
         for (let line of this.inventory.lines) {
           id = line.id;
-          console.log("Line", line)
           let values = {
             inventory: data[method][0],
             product: line.product.id,
@@ -547,11 +502,9 @@ export class InventoryListPage {
           }
           json_lines.addNode(inventory_line, [id, values])
         }
-        console.log(inventory_line)
         let lines = json_lines.createJSON()
         this.trytonProvider.write(lines).subscribe(
           data => {
-            console.log("Inventory lines saved succesfuly!")
             this.saved = true;
             this.new_inventory = false;
             this.events.publish("Save procedure completed")
@@ -590,7 +543,6 @@ export class InventoryListPage {
     this.trytonProvider.write(lines).subscribe(
       data => {
         this.saved = true;
-        console.log("Update successful", data)
         alert('Inventario actualizado')
       },
       error => {
@@ -608,7 +560,6 @@ export class InventoryListPage {
       this.trytonProvider.rpc_call("model.stock.inventory.confirm",
         [[id]]).subscribe(
         data => {
-          console.log("Confirm successful");
           this.navCtrl.pop();
         },
         error => {
