@@ -100,17 +100,17 @@ export class InventoryListPage {
         lost_found: 7,
         lines: []
       }
+      this.save();
+
       // If the user choosed a complete inventory
       if (!params.products_inventory) {
         this.showLoading();
         // Save current inventory
-        this.save();
         events.subscribe('Save procedure completed', (eventData) => {
           this.completeLines();
           this.saved = false;
           events.unsubscribe('Save procedure completed');
         })
-
       }
       console.log("Creating new inventory", this.inventory)
     }
@@ -119,7 +119,7 @@ export class InventoryListPage {
    * Asks the suer if he/she wants to leave the view
    * @return {Promise<any>} True or false
    */
-  
+
   ionViewCanLeave(): Promise<any> {
     console.log("Saving", this.saved)
     if (!this.saved) {
@@ -160,12 +160,13 @@ export class InventoryListPage {
 
   /**
    * Fallback if the input loses focus
+   * TODO: Remove
    */
   blurInputs(event) {
 
     if (this.blur_element)
         document.getElementById('test').focus()
-      //this.rd.invokeElementMethod(this.myInput2.nativeElement, 'focus')
+      //this.rd.invqokeElementMethod(this.myInput2.nativeElement, 'focus')
     this.blur_element = false;
   }
 
@@ -206,13 +207,20 @@ export class InventoryListPage {
         }
         this.events.publish("Fetch complete")
         this.hideLoading()
+        /* We gather all the data to display it and then we get all the barcodes
+         * This is so its gonna be faster to givve the user feedback by displaying
+         * the products than waiting a longer for the barcodes
+         */
         this.search_code(product_ids)
       },
       error => {
         console.log("A wild error was found", error);
       })
   }
-
+  /**
+   * Searchs the given ID and stores its code.
+   * @param {string} product_ids id of the product
+   */
   public search_code(product_ids){
     let json_constructor = new EncodeJSONRead;
     let method = "product.code";
@@ -273,6 +281,8 @@ export class InventoryListPage {
    */
   private setProductQuantity(item_code: string, set_quantity: number) {
     console.log("Item quantity", item_code, set_quantity)
+    if (set_quantity == NaN) return false;
+
     for (let line of this.item_array) {
       if (line.product.codes_number.indexOf(item_code.toString()) >= 0) {
         if (this.barcode.length > 5) {
@@ -301,7 +311,7 @@ export class InventoryListPage {
     return false;
   }
   /**
-   * Gets the data from the given product barcode 
+   * Gets the data from the given product barcode
    * @param {string} barcode Bar code number of a product
    */
   public getProduct(barcode: string) {
@@ -409,6 +419,7 @@ export class InventoryListPage {
 
   /**
    * Shows a loading component on top of the view
+   * Only present during the beggining of the view
    */
   private showLoading() {
     console.log("Showing loading")
@@ -488,6 +499,9 @@ export class InventoryListPage {
     }
     json_constructor.addNode(method, [id, values])
     let json = json_constructor.createJSON()
+    // TODO: Look how its done in the catalogs / shipments in FSSM
+    // Its shorter and more efficient
+    // Save the inventory
     this.trytonProvider.write(json).subscribe(
       data => {
         this.inventory.id = data[method][0];
@@ -503,6 +517,7 @@ export class InventoryListPage {
           json_lines.addNode(inventory_line, [id, values])
         }
         let lines = json_lines.createJSON()
+        // Save the lines
         this.trytonProvider.write(lines).subscribe(
           data => {
             this.saved = true;
@@ -525,6 +540,7 @@ export class InventoryListPage {
 
   /**
    * Updates the current inventory with the new values
+   * TODO: Look how its done in FSSM for catalogs/shipments. Its more efficient
    */
   update() {
     let json_lines = new EncodeJSONWrite;

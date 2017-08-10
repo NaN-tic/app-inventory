@@ -117,7 +117,7 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
 
           this.navCtrl.setRoot(new Routing().getNext(this.constructor.name), { params: {
               location: this.location[0],
-              new_inventory: true}} )      
+              new_inventory: true}} )
         }
         else{
           alert("Incorrect Location");
@@ -128,7 +128,6 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
       error => {
         console.log("Error", error)
       })
-
   }
 
   /**
