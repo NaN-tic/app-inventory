@@ -18,7 +18,7 @@ import { Routing } from '../../../pages/routing/routing';
 })
 
 /**
- * Thsi component controlls the list of already created inventories
+ * This component controlls the list of already created inventories
  */
 export class InventoriesPage extends InfiniteList{
 
@@ -49,8 +49,8 @@ export class InventoriesPage extends InfiniteList{
   	}
 
   	/**
- 	 * Gets called when a location from the list is selected
-   * @param {Object} event   Event description
+ 	 * Gets called when a inventory from the list is selected
+     * @param {Object} event   Event description
  	 * @param {Location} item  Location selected
  	 * @returns                Go to the next page
  	 */
@@ -66,9 +66,9 @@ export class InventoriesPage extends InfiniteList{
     	this.inventory = {
     		company: item.company_id,
     		date: item.date,
-        state: item.state,
+            state: item.state,
     		location: this.location,
-        lost_found: 7,
+            lost_found: 7,
     		id: item.id
     	}
     	console.log("Item selected", item)

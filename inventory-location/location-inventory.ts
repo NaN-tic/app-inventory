@@ -1,3 +1,4 @@
+
 import { Component, ViewChild, Input, AfterViewInit } from '@angular/core';
 import { NavController, NavParams, Events } from 'ionic-angular';
 import { Keyboard } from 'ionic-native';
@@ -58,26 +59,26 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
     //document.getElementById('test').focus()
     Keyboard.close()
   }
-   blurInput(event){
+  blurInput(event){
        if (this.blur_element){
             document.getElementById('test').focus()
             //Keyboard.close()
         }
         this.blur_element = false;
-   }
-   ionViewDidEnter() {
+  }
+  ionViewDidEnter() {
      console.log("Inside view");
      this.blur_element = true;
      //document.getElementById('test').focus();
      Keyboard.close()
-   }
-   setFocus(event) {
+  }
+  setFocus(event) {
      console.log("Focus set")
-   }
-       /**
+  }
+  /**
    * Clears the input
    */
-    public clearInput(): void{
+  public clearInput(): void{
     this.itemInput = '';
     this.location_code = '';
   }
@@ -115,9 +116,8 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
           this.itemInput = '';
           this.location_code = '';
 
-          this.navCtrl.setRoot(new Routing().getNext(this.constructor.name), { params: {
-              location: this.location[0],
-              new_inventory: true}} )
+          this.navCtrl.push(new Routing().getNext(this.constructor.name), { params: {
+              location: this.location[0], new_inventory: true}} )
         }
         else{
           alert("Incorrect Location");
