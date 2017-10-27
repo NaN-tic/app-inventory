@@ -64,7 +64,6 @@ export class InventoryListPage {
 
   inventory_fields: Array<string> = [];
 
-
   constructor(
     public navCtrl: NavController, public navParams: NavParams,
     public trytonProvider: TrytonProvider, public locker: Locker,
@@ -99,7 +98,7 @@ export class InventoryListPage {
         location: navParams.get('params').location,
         state: "draft",
         id: -1,
-        lost_found: 7,
+        lost_found: 7, // TODO: hardcode lost found ID location
         lines: []
       }
       this.save();

@@ -31,7 +31,6 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
   @ViewChild('focusInput') myInput;
   item: string
 
-
   elementInput: boolean = false;
 
   location: Location;
@@ -39,7 +38,7 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
   blur_element: boolean;
 
   constructor(public navCtrl: NavController, public trytond_provider: TrytonProvider,
-  		public navParams: NavParams, public events: Events) {
+    public navParams: NavParams, public events: Events) {
     super(navCtrl, trytond_provider, events)
 
     console.log("data", navParams.get('params'))
@@ -75,6 +74,7 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
   setFocus(event) {
      console.log("Focus set")
   }
+
   /**
    * Clears the input
    */
@@ -82,6 +82,7 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
     this.itemInput = '';
     this.location_code = '';
   }
+
   /**
    * Gets called when a location from the list is selected
    * @param {Object} event   Event description
@@ -94,6 +95,7 @@ export class LocationInventoryPage extends InfiniteList implements AfterViewInit
         location: item,
         new_inventory: true}} )
   }
+
   /**
    * Go to the next stage, check if the entered location is valid
    */
