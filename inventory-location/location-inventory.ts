@@ -24,7 +24,7 @@ import { Routing } from '../../../pages/routing/routing';
  */
 export class LocationInventoryPage extends InfiniteList implements AfterViewInit{
 
-  @Input()
+  // @Input()
   itemInput: string = '';
 
   location_code: string = '';
