@@ -11,6 +11,8 @@ import { TrytonProvider } from '../../providers/tryton-provider'
 import { Products } from '../../../models/interfaces/products'
 import { Inventory, InventoryLines } from '../../../models/interfaces/inventory'
 
+import { MainMenuPage } from '../../../pages/main-menu/main-menu'
+
 
 @Component({
   selector: 'page-inventory-list',
@@ -62,7 +64,6 @@ export class InventoryListPage {
 
   inventory_fields: Array<string> = [];
 
-
   constructor(
     public navCtrl: NavController, public navParams: NavParams,
     public trytonProvider: TrytonProvider, public locker: Locker,
@@ -97,7 +98,7 @@ export class InventoryListPage {
         location: navParams.get('params').location,
         state: "draft",
         id: -1,
-        lost_found: 7,
+        lost_found: 7, // TODO: hardcode lost found ID location
         lines: []
       }
       this.save();
@@ -116,7 +117,7 @@ export class InventoryListPage {
     }
   }
   /**
-   * Asks the suer if he/she wants to leave the view
+   * Asks the user if he/she wants to leave the view
    * @return {Promise<any>} True or false
    */
 
@@ -250,8 +251,8 @@ export class InventoryListPage {
   }
 
   /**
-   * Checks wether or not the given barcode exisit in the system and adds
-   * a quantity to it if it already exisit or adds it to the list
+   * Checks wether or not the given barcode exists in the system and adds
+   * a quantity to it if it already exists or adds it to the list
    * @param  {string}  data barcode or quantity to add
    * @return {boolean}      True if completed correctly
    */
@@ -529,7 +530,6 @@ export class InventoryListPage {
             console.log("Error", error);
             alert(error.messages[0])
           })
-
       },
       error => {
         console.log("Error", error);
@@ -559,6 +559,8 @@ export class InventoryListPage {
     this.trytonProvider.write(lines).subscribe(
       data => {
         this.saved = true;
+        this.item_array = []
+        this.fetchInventoryData(this.location, this.inventory);
         alert('Inventario actualizado')
       },
       error => {
@@ -576,7 +578,7 @@ export class InventoryListPage {
       this.trytonProvider.rpc_call("model.stock.inventory.confirm",
         [[id]]).subscribe(
         data => {
-          this.navCtrl.pop();
+          this.navCtrl.setRoot(MainMenuPage);
         },
         error => {
           console.log("An error occurred", error)
